@@ -1,36 +1,38 @@
 <?php
-include 'db.php';
+// Include the database connection configuration
+include '../db.php';
 
-$message = ""; // To store success or error messages
+$message = ""; 
 
-// 1. Fetch Classes for the Dropdown (Crucial for "Relationships" marks)
-// We need the user to pick a real class, not just type "Year 100".
+// 1. Fetch Classes: We need to populate the dropdown menu first.
+// This ensures users can only assign pupils to valid, existing classes.
 $class_sql = "SELECT * FROM Classes";
 $class_stmt = $pdo->query($class_sql);
 $classes = $class_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 2. Handle the Form Submission (When they click "Add Pupil")
+// 2. Handle Form Submission: Check if the user has clicked "Add Pupil"
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
-    // Collect data from the form
+    // Collect and sanitize the input data
     $full_name = trim($_POST['full_name']);
     $address = trim($_POST['address']);
     $medical_info = trim($_POST['medical_info']);
     $class_id = $_POST['class_id'];
 
-    // 3. Validation (Crucial for "Clean Data" marks - 70%+)
-    // Check if fields are empty
+    // 3. Validation: Ensure all mandatory fields are present.
+    // This protects the database from incomplete records.
     if (empty($full_name) || empty($address) || empty($class_id)) {
         $message = "<p style='color: red;'>Error: Name, Address, and Class are required!</p>";
     } else {
-        // 4. Safe Insertion (Prevents SQL Injection)
         try {
+            // 4. Insert Data: Prepare the SQL statement.
+            // Using named parameters (:full_name, etc.) prevents SQL injection attacks.
             $sql = "INSERT INTO Pupils (full_name, address, medical_info, class_id) 
                     VALUES (:full_name, :address, :medical_info, :class_id)";
             
             $stmt = $pdo->prepare($sql);
             
-            // Bind the "clean" data to the SQL command
+            // Execute the query with the sanitized form data
             $stmt->execute([
                 ':full_name' => $full_name,
                 ':address' => $address,
@@ -41,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = "<p style='color: green;'>Success! New pupil added.</p>";
             
         } catch (PDOException $e) {
+            // Catch any database errors (like connection issues) and show them to the user
             $message = "<p style='color: red;'>Database Error: " . $e->getMessage() . "</p>";
         }
     }
@@ -52,15 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Add New Pupil</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        form { max-width: 400px; margin-top: 20px; }
-        label { display: block; margin-top: 10px; }
-        input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-        button { margin-top: 15px; padding: 10px 20px; background: #007BFF; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .back-link { display: block; margin-top: 20px; }
-    </style>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 

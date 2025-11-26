@@ -1,14 +1,15 @@
 <?php
-include 'db.php'; // 1. Get the key to the pantry
+// Include the database connection file to establish a link to the DB
+include '../db.php';
 
-// 2. Write the note for the kitchen (The SQL Query)
-// We want to get the pupil's name and their class name.
-// We join the tables so we don't just see "Class ID: 1", but "Reception".
-$sql = "SELECT Pupils.pupil_id, Pupils.full_name, Classes.class_name, Pupils.medical_info 
+// Prepare the SQL query to fetch pupil details.
+// We perform an INNER JOIN with the 'Classes' table to retrieve the actual
+// 'class_name' (e.g., "Year One") instead of just the numeric 'class_id'.
+$sql = "SELECT Pupils.pupil_id, Pupils.full_name, Classes.class_name, Pupils.medical_info, Pupils.address
         FROM Pupils
         JOIN Classes ON Pupils.class_id = Classes.class_id";
 
-// 3. Send the note and get the ingredients
+// Execute the query and fetch all results into an associative array
 $stmt = $pdo->query($sql);
 $pupils = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -18,16 +19,15 @@ $pupils = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>St Alphonsus Pupil Records</title>
-    <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #f2f2f2; }
-    </style>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
+    <?php include '../nav.php'; ?>
+
     <h1>St Alphonsus Primary School - Pupil List</h1>
-    <a href="add_pupil.php" style="display:inline-block; margin-bottom:10px; padding:10px; background:green; color:white; text-decoration:none;">+ Add New Pupil</a>
+
+    <a href="add_pupil.php" class="add-btn">+ Add New Pupil</a>
 
     <table>
         <thead>
@@ -36,7 +36,9 @@ $pupils = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <th>Full Name</th>
                 <th>Class</th>
                 <th>Medical Info</th>
-                <th>Actions</th> </tr>
+                <th>Address</th>
+                <th>Actions</th>
+            </tr>
         </thead>
         <tbody>
             <?php foreach ($pupils as $pupil): ?>
@@ -44,11 +46,12 @@ $pupils = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?= htmlspecialchars($pupil['pupil_id']) ?></td>
                     <td><?= htmlspecialchars($pupil['full_name']) ?></td>
                     <td><?= htmlspecialchars($pupil['class_name']) ?></td>
+                    <td><?= htmlspecialchars($pupil['address']) ?></td>
                     <td><?= htmlspecialchars($pupil['medical_info']) ?></td>
                     <td>
-                        <a href="edit_pupil.php?id=<?= $pupil['pupil_id'] ?>" style="color: orange;">Edit</a>
+                        <a href="edit_pupil.php?id=<?= $pupil['pupil_id'] ?>" class="edit-link">Edit</a>
                         |
-                        <a href="delete_pupil.php?id=<?= $pupil['pupil_id'] ?>" style="color: red;" onclick="return confirm('Are you sure?');">Delete</a>
+                        <a href="delete_pupil.php?id=<?= $pupil['pupil_id'] ?>" class="delete-link" onclick="return confirm('Are you sure you want to delete this record?');">Delete</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

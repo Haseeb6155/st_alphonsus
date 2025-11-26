@@ -1,42 +1,48 @@
 <?php
-include 'db.php';
+// Include the database connection setup
+include '../db.php';
 
 $message = "";
 
-// 1. Get the Pupil ID from the URL (e.g., ?id=5)
+// 1. Validation: Check if an ID was passed in the URL (e.g., edit_pupil.php?id=5)
 if (!isset($_GET['id'])) {
-    header("Location: index.php"); // Kick them back if no ID
+    // If no ID is present, we can't edit anything, so redirect to the main list
+    header("Location: index.php");
     exit;
 }
 
 $id = $_GET['id'];
 
-// 2. Fetch the Pupil's Current Data
+// 2. Fetch Existing Data: Get the pupil's current info to pre-fill the form
+// This ensures the user sees what they are editing.
 $sql = "SELECT * FROM Pupils WHERE pupil_id = :id";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([':id' => $id]);
 $pupil = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Safety check: Stop if the ID doesn't exist in the database
 if (!$pupil) {
     die("Pupil not found!");
 }
 
-// 3. Fetch Classes for the Dropdown
+// 3. Fetch Classes: Get the list for the dropdown menu
 $class_stmt = $pdo->query("SELECT * FROM Classes");
 $classes = $class_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 4. Handle the Update Form Submission
+// 4. Handle Form Submission: Process the update when the user clicks 'Update Pupil'
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Sanitize inputs to remove extra whitespace
     $full_name = trim($_POST['full_name']);
     $address = trim($_POST['address']);
     $medical_info = trim($_POST['medical_info']);
     $class_id = $_POST['class_id'];
 
+    // Basic validation to prevent saving empty records
     if (empty($full_name) || empty($address)) {
         $message = "<p style='color: red;'>Name and Address are required!</p>";
     } else {
         try {
-            // The UPDATE SQL Command
+            // Prepare the SQL UPDATE command
             $sql = "UPDATE Pupils 
                     SET full_name = :full_name, 
                         address = :address, 
@@ -45,6 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     WHERE pupil_id = :id";
             
             $stmt = $pdo->prepare($sql);
+            
+            // Execute with bound parameters to prevent SQL injection
             $stmt->execute([
                 ':full_name' => $full_name,
                 ':address' => $address,
@@ -55,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $message = "<p style='color: green;'>Success! Details updated.</p>";
             
-            // Refresh the data so the form shows the new info
+            // Refresh the $pupil variable so the form displays the new changes immediately
             $stmt = $pdo->prepare("SELECT * FROM Pupils WHERE pupil_id = :id");
             $stmt->execute([':id' => $id]);
             $pupil = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -72,15 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Edit Pupil</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        form { max-width: 400px; margin-top: 20px; }
-        label { display: block; margin-top: 10px; }
-        input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-        button { margin-top: 15px; padding: 10px 20px; background: orange; color: white; border: none; cursor: pointer; }
-        button:hover { background: darkorange; }
-        .back-link { display: block; margin-top: 20px; }
-    </style>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
