@@ -36,7 +36,7 @@ $pupils = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <th>Full Name</th>
                 <th>Class</th>
                 <th>Medical Info</th>
-            </tr>
+                <th>Actions</th> </tr>
         </thead>
         <tbody>
             <?php foreach ($pupils as $pupil): ?>
@@ -45,6 +45,11 @@ $pupils = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?= htmlspecialchars($pupil['full_name']) ?></td>
                     <td><?= htmlspecialchars($pupil['class_name']) ?></td>
                     <td><?= htmlspecialchars($pupil['medical_info']) ?></td>
+                    <td>
+                        <a href="edit_pupil.php?id=<?= $pupil['pupil_id'] ?>" style="color: orange;">Edit</a>
+                        |
+                        <a href="delete_pupil.php?id=<?= $pupil['pupil_id'] ?>" style="color: red;" onclick="return confirm('Are you sure?');">Delete</a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
