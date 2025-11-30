@@ -1,34 +1,43 @@
 <?php
 include '../db.php';
 
-// 1. Check if an ID was provided
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
-
     try {
-        // 2. Prepare the DELETE statement
         $sql = "DELETE FROM classes WHERE class_id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
-        
-        // 3. Redirect back to the list
         header("Location: classes.php");
         exit;
-
     } catch (PDOException $e) {
-        // 4. Handle "Foreign Key" Error
-        // If pupils are assigned to this class, the database won't let you delete it.
-        if ($e->getCode() == 23000) {
-            echo "<h2>Error!</h2>";
-            echo "<p>Cannot delete this class because <b>Pupils are currently assigned to it</b>.</p>";
-            echo "<p>Please re-assign those pupils to a different class first.</p>";
-            echo "<a href='classes.php'>Back to Class List</a>";
-        } else {
-            echo "Error deleting record: " . $e->getMessage();
-        }
+        // ERROR UI
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8"><title>Error</title>
+            <link rel="stylesheet" href="../style.css">
+        </head>
+        <body class="centered-layout">
+            <div class="form-card" style="text-align: center;">
+                <h2 style="color: var(--danger);">Delete Failed</h2>
+                <p style="color: var(--text-muted); margin: 20px 0;">
+                    <?php 
+                    if ($e->getCode() == 23000) {
+                        echo "You cannot delete this class because it has <b>Pupils</b> assigned to it.<br>Please move the pupils to another class first.";
+                    } else {
+                        echo $e->getMessage();
+                    }
+                    ?>
+                </p>
+                <a href="classes.php" class="btn btn-primary">Back to Classes</a>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
     }
 } else {
     header("Location: classes.php");
-    exit;
 }
 ?>

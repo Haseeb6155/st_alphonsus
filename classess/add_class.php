@@ -1,45 +1,27 @@
 <?php
 include '../db.php';
-
 $message = "";
 
-// 1. Fetch Teachers for the Dropdown
-// We need the ID and Name so we can pick "Mr. Smith" but save "1".
-$teacher_sql = "SELECT * FROM teachers";
-$teacher_stmt = $pdo->query($teacher_sql);
-$teachers = $teacher_stmt->fetchAll(PDO::FETCH_ASSOC);
+// Fetch teachers for dropdown
+$teachers = $pdo->query("SELECT * FROM teachers")->fetchAll();
 
-// 2. Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $class_name = trim($_POST['class_name']);
     $capacity = trim($_POST['capacity']);
     $teacher_id = $_POST['teacher_id'];
 
-    if (empty($class_name) || empty($capacity) || empty($teacher_id)) {
-        $message = "<p style='color: red;'>All fields are required!</p>";
+    if (empty($class_name) || empty($capacity)) {
+        $message = "<div class='status-pill status-inactive'>Class Name and Capacity required!</div>";
     } else {
         try {
-            // 3. Insert the new Class
-            $sql = "INSERT INTO classes (class_name, capacity, teacher_id) 
-                    VALUES (:class_name, :capacity, :teacher_id)";
-            
+            $sql = "INSERT INTO classes (class_name, capacity, teacher_id) VALUES (:name, :cap, :tid)";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':class_name' => $class_name,
-                ':capacity' => $capacity,
-                ':teacher_id' => $teacher_id
-            ]);
-
-            $message = "<p style='color: green;'>Success! New class added.</p>";
+            $stmt->execute([':name' => $class_name, ':cap' => $capacity, ':tid' => $teacher_id]);
             
+            $message = "<div class='status-pill status-active'>Success! Class Created.</div>";
+            header("refresh:1;url=classes.php");
         } catch (PDOException $e) {
-            // 4. Handle "Duplicate Teacher" Error
-            // Error code 23000 usually means a "Unique Constraint" violation
-            if ($e->getCode() == 23000) {
-                 $message = "<p style='color: red;'>Error: That teacher is already assigned to another class!</p>";
-            } else {
-                 $message = "<p style='color: red;'>Database Error: " . $e->getMessage() . "</p>";
-            }
+            $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
         }
     }
 }
@@ -49,42 +31,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add New Class</title>
+    <title>Add Class</title>
     <link rel="stylesheet" href="../style.css">
-    <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        nav { width: 100%; max-width: 800px; }
-    </style>
 </head>
-<body>
+<body class="centered-layout">
 
-    <?php include '../nav.php'; ?>
+    <div class="form-card">
+        <h2 class="mb-4">Create New Class</h2>
+        <?= $message ?>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>Class Name</label>
+                <input type="text" name="class_name" placeholder="e.g. Year 5B">
+            </div>
+            
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" name="capacity" placeholder="e.g. 30">
+            </div>
 
-    <h1>Add New Class</h1>
-    
-    <?= $message ?>
+            <div class="form-group">
+                <label>Assign Teacher</label>
+                <select name="teacher_id">
+                    <option value="">-- No Teacher --</option>
+                    <?php foreach ($teachers as $t): ?>
+                        <option value="<?= $t['teacher_id'] ?>"><?= htmlspecialchars($t['full_name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-    <form method="POST">
-        <label>Class Name: *</label>
-        <input type="text" name="class_name" placeholder="e.g. Year Three">
-
-        <label>Capacity: *</label>
-        <input type="text" name="capacity" placeholder="e.g. 30">
-
-        <label>Assign Teacher: *</label>
-        <select name="teacher_id">
-            <option value="">-- Select a Teacher --</option>
-            <?php foreach ($teachers as $teacher): ?>
-                <option value="<?= $teacher['teacher_id'] ?>">
-                    <?= htmlspecialchars($teacher['full_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <button type="submit">Add Class</button>
-    </form>
-
-    <a href="classes.php" class="back-link">← Back to Class List</a>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Create Class</button>
+            <a href="classes.php" class="btn btn-sm" style="width: 100%; text-align: center; margin-top: 10px; background: transparent;">Cancel</a>
+        </form>
+    </div>
 
 </body>
 </html>

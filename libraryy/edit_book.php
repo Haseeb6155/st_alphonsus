@@ -2,58 +2,35 @@
 include '../db.php';
 $message = "";
 
-// 1. Check for ID
-if (!isset($_GET['id'])) {
-    header("Location: library.php");
-    exit;
-}
-
+if (!isset($_GET['id'])) { header("Location: library.php"); exit; }
 $id = $_GET['id'];
 
-// 2. Fetch Current Book Data
-$sql = "SELECT * FROM Library_Books WHERE book_id = :id";
-$stmt = $pdo->prepare($sql);
+// Fetch Book
+$stmt = $pdo->prepare("SELECT * FROM Library_Books WHERE book_id = :id");
 $stmt->execute([':id' => $id]);
-$book = $stmt->fetch(PDO::FETCH_ASSOC);
+$book = $stmt->fetch();
 
-if (!$book) { die("Book not found!"); }
-
-// 3. Handle Update
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = trim($_POST['title']);
     $author = trim($_POST['author']);
     $year = trim($_POST['year_published']);
-    $available = $_POST['available']; // This will be 1 or 0
+    $available = $_POST['available'];
 
     if (empty($title) || empty($author)) {
-        $message = "<p style='color: red;'>Title and Author are required!</p>";
+        $message = "<div class='status-pill status-inactive'>Title and Author required!</div>";
     } else {
         try {
-            $sql = "UPDATE Library_Books 
-                    SET title = :title, 
-                        author = :author, 
-                        year_published = :year, 
-                        available = :available 
-                    WHERE book_id = :id";
-            
+            $sql = "UPDATE Library_Books SET title=:title, author=:author, year_published=:year, available=:avail WHERE book_id=:id";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':title' => $title,
-                ':author' => $author,
-                ':year' => $year,
-                ':available' => $available,
-                ':id' => $id
-            ]);
-
-            $message = "<p style='color: green;'>Success! Book details updated.</p>";
+            $stmt->execute([':title' => $title, ':author' => $author, ':year' => $year, ':avail' => $available, ':id' => $id]);
             
-            // Refresh Data
+            $message = "<div class='status-pill status-active'>Book Updated!</div>";
+            // Refresh data
             $stmt = $pdo->prepare("SELECT * FROM Library_Books WHERE book_id = :id");
             $stmt->execute([':id' => $id]);
-            $book = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            $book = $stmt->fetch();
         } catch (PDOException $e) {
-            $message = "<p style='color: red;'>Error: " . $e->getMessage() . "</p>";
+            $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
         }
     }
 }
@@ -65,39 +42,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <title>Edit Book</title>
     <link rel="stylesheet" href="../style.css">
-    <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        nav { width: 100%; max-width: 800px; }
-    </style>
 </head>
-<body>
+<body class="centered-layout">
+    <div class="form-card">
+        <h2 class="mb-4">Edit Book Details</h2>
+        <?= $message ?>
+        <form method="POST">
+            <div class="form-group"><label>Title</label><input type="text" name="title" value="<?= htmlspecialchars($book['title']) ?>"></div>
+            <div class="form-group"><label>Author</label><input type="text" name="author" value="<?= htmlspecialchars($book['author']) ?>"></div>
+            <div class="form-group"><label>Year</label><input type="text" name="year_published" value="<?= htmlspecialchars($book['year_published']) ?>"></div>
+            
+            <div class="form-group">
+                <label>Status</label>
+                <select name="available">
+                    <option value="1" <?= $book['available'] == 1 ? 'selected' : '' ?>>Available</option>
+                    <option value="0" <?= $book['available'] == 0 ? 'selected' : '' ?>>Checked Out</option>
+                </select>
+            </div>
 
-    <?php include '../nav.php'; ?>
-
-    <h1>Edit Book: <?= htmlspecialchars($book['title']) ?></h1>
-    
-    <?= $message ?>
-
-    <form method="POST">
-        <label>Book Title: *</label>
-        <input type="text" name="title" value="<?= htmlspecialchars($book['title']) ?>">
-
-        <label>Author: *</label>
-        <input type="text" name="author" value="<?= htmlspecialchars($book['author']) ?>">
-
-        <label>Year Published:</label>
-        <input type="text" name="year_published" value="<?= htmlspecialchars($book['year_published']) ?>">
-
-        <label>Available?</label>
-        <select name="available">
-            <option value="1" <?= $book['available'] == 1 ? 'selected' : '' ?>>Yes</option>
-            <option value="0" <?= $book['available'] == 0 ? 'selected' : '' ?>>No</option>
-        </select>
-
-        <button type="submit">Update Book</button>
-    </form>
-
-    <a href="library.php" class="back-link">← Back to Library</a>
-
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Update Book</button>
+            <a href="library.php" class="btn btn-sm" style="width: 100%; text-align: center; margin-top: 10px; background: transparent;">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

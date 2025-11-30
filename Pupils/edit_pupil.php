@@ -1,75 +1,39 @@
 <?php
-// Include the database connection setup
 include '../db.php';
-
 $message = "";
 
-// 1. Validation: Check if an ID was passed in the URL (e.g., edit_pupil.php?id=5)
-if (!isset($_GET['id'])) {
-    // If no ID is present, we can't edit anything, so redirect to the main list
-    header("Location: index.php");
-    exit;
-}
-
+if (!isset($_GET['id'])) { header("Location: index.php"); exit; }
 $id = $_GET['id'];
 
-// 2. Fetch Existing Data: Get the pupil's current info to pre-fill the form
-// This ensures the user sees what they are editing.
-$sql = "SELECT * FROM Pupils WHERE pupil_id = :id";
-$stmt = $pdo->prepare($sql);
+// Fetch Pupil
+$stmt = $pdo->prepare("SELECT * FROM Pupils WHERE pupil_id = :id");
 $stmt->execute([':id' => $id]);
-$pupil = $stmt->fetch(PDO::FETCH_ASSOC);
+$pupil = $stmt->fetch();
 
-// Safety check: Stop if the ID doesn't exist in the database
-if (!$pupil) {
-    die("Pupil not found!");
-}
+// Fetch Classes
+$classes = $pdo->query("SELECT * FROM Classes")->fetchAll();
 
-// 3. Fetch Classes: Get the list for the dropdown menu
-$class_stmt = $pdo->query("SELECT * FROM Classes");
-$classes = $class_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// 4. Handle Form Submission: Process the update when the user clicks 'Update Pupil'
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Sanitize inputs to remove extra whitespace
     $full_name = trim($_POST['full_name']);
     $address = trim($_POST['address']);
     $medical_info = trim($_POST['medical_info']);
     $class_id = $_POST['class_id'];
 
-    // Basic validation to prevent saving empty records
     if (empty($full_name) || empty($address)) {
-        $message = "<p style='color: red;'>Name and Address are required!</p>";
+        $message = "<div class='status-pill status-inactive'>Name and Address required!</div>";
     } else {
         try {
-            // Prepare the SQL UPDATE command
-            $sql = "UPDATE Pupils 
-                    SET full_name = :full_name, 
-                        address = :address, 
-                        medical_info = :medical_info, 
-                        class_id = :class_id 
-                    WHERE pupil_id = :id";
-            
+            $sql = "UPDATE Pupils SET full_name=:name, address=:addr, medical_info=:med, class_id=:cid WHERE pupil_id=:id";
             $stmt = $pdo->prepare($sql);
+            $stmt->execute([':name' => $full_name, ':addr' => $address, ':med' => $medical_info, ':cid' => $class_id, ':id' => $id]);
+            $message = "<div class='status-pill status-active'>Pupil Updated!</div>";
             
-            // Execute with bound parameters to prevent SQL injection
-            $stmt->execute([
-                ':full_name' => $full_name,
-                ':address' => $address,
-                ':medical_info' => $medical_info,
-                ':class_id' => $class_id,
-                ':id' => $id
-            ]);
-
-            $message = "<p style='color: green;'>Success! Details updated.</p>";
-            
-            // Refresh the $pupil variable so the form displays the new changes immediately
+            // Refresh
             $stmt = $pdo->prepare("SELECT * FROM Pupils WHERE pupil_id = :id");
             $stmt->execute([':id' => $id]);
-            $pupil = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            $pupil = $stmt->fetch();
         } catch (PDOException $e) {
-            $message = "<p style='color: red;'>Error: " . $e->getMessage() . "</p>";
+            $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
         }
     }
 }
@@ -82,37 +46,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Edit Pupil</title>
     <link rel="stylesheet" href="../style.css">
 </head>
-<body>
-
-    <h1>Edit Pupil: <?= htmlspecialchars($pupil['full_name']) ?></h1>
-    
-    <?= $message ?>
-
-    <form method="POST">
-        
-        <label>Full Name: *</label>
-        <input type="text" name="full_name" value="<?= htmlspecialchars($pupil['full_name']) ?>">
-
-        <label>Address: *</label>
-        <input type="text" name="address" value="<?= htmlspecialchars($pupil['address']) ?>">
-
-        <label>Medical Info:</label>
-        <textarea name="medical_info"><?= htmlspecialchars($pupil['medical_info']) ?></textarea>
-
-        <label>Class: *</label>
-        <select name="class_id">
-            <?php foreach ($classes as $class): ?>
-                <option value="<?= $class['class_id'] ?>" 
-                    <?= $class['class_id'] == $pupil['class_id'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($class['class_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <button type="submit">Update Pupil</button>
-    </form>
-
-    <a href="index.php" class="back-link">← Back to Pupil List</a>
-
+<body class="centered-layout">
+    <div class="form-card">
+        <h2 class="mb-4">Edit Pupil Record</h2>
+        <?= $message ?>
+        <form method="POST">
+            <div class="form-group"><label>Full Name</label><input type="text" name="full_name" value="<?= htmlspecialchars($pupil['full_name']) ?>"></div>
+            <div class="form-group"><label>Address</label><input type="text" name="address" value="<?= htmlspecialchars($pupil['address']) ?>"></div>
+            <div class="form-group"><label>Medical Info</label><textarea name="medical_info"><?= htmlspecialchars($pupil['medical_info']) ?></textarea></div>
+            <div class="form-group">
+                <label>Class</label>
+                <select name="class_id">
+                    <?php foreach ($classes as $c): ?>
+                        <option value="<?= $c['class_id'] ?>" <?= $c['class_id'] == $pupil['class_id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($c['class_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Update Pupil</button>
+            <a href="index.php" class="btn btn-sm" style="width: 100%; text-align: center; margin-top: 10px; background: transparent;">Cancel</a>
+        </form>
+    </div>
 </body>
 </html>

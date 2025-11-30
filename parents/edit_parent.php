@@ -1,61 +1,87 @@
 <?php
-include '../db.php';
-$message = "";
+/*
+    EDIT PARENT CONTROLLER
+    ----------------------
+    Handles updating parent details and unlinking children.
+*/
 
-// 1. Check for ID
+include '../db.php';
+
+// 1. VALIDATION: Ensure an ID was provided
 if (!isset($_GET['id'])) {
     header("Location: parents.php");
     exit;
 }
 
 $id = $_GET['id'];
+$message = "";
 
-// 2. Fetch Current Parent Data to pre-fill the form
-$sql = "SELECT * FROM Parents WHERE parent_id = :id";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([':id' => $id]);
-$parent = $stmt->fetch(PDO::FETCH_ASSOC);
+// 2. LOGIC: Handle "Unlink Child" Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unlink_pupil_id'])) {
+    try {
+        $unlink_sql = "DELETE FROM Pupil_Parent WHERE parent_id = :paid AND pupil_id = :pid";
+        $stmt = $pdo->prepare($unlink_sql);
+        $stmt->execute([
+            ':paid' => $id,
+            ':pid'  => $_POST['unlink_pupil_id']
+        ]);
+        $message = "<div class='status-pill status-active'>Link removed successfully.</div>";
+    } catch (PDOException $e) {
+        $message = "<div class='status-pill status-inactive'>Error: " . htmlspecialchars($e->getMessage()) . "</div>";
+    }
+}
 
-if (!$parent) { die("Parent not found!"); }
-
-// 3. Handle Update Submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// 3. LOGIC: Handle "Update Parent Info" Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_parent'])) {
     $full_name = trim($_POST['full_name']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
-    $address = trim($_POST['address']);
+    $email     = trim($_POST['email']);
+    $phone     = trim($_POST['phone']);
+    $address   = trim($_POST['address']);
 
     if (empty($full_name) || empty($phone)) {
-        $message = "<p style='color: red;'>Name and Phone are required!</p>";
+        $message = "<div class='status-pill status-inactive'>Full Name and Phone are required.</div>";
     } else {
         try {
-            $sql = "UPDATE Parents 
-                    SET full_name = :full_name, 
-                        email = :email, 
-                        phone = :phone, 
-                        address = :address 
-                    WHERE parent_id = :id";
+            $update_sql = "UPDATE Parents 
+                           SET full_name = :name, email = :email, phone = :phone, address = :addr 
+                           WHERE parent_id = :id";
             
-            $stmt = $pdo->prepare($sql);
+            $stmt = $pdo->prepare($update_sql);
             $stmt->execute([
-                ':full_name' => $full_name,
+                ':name'  => $full_name,
                 ':email' => $email,
                 ':phone' => $phone,
-                ':address' => $address,
-                ':id' => $id
+                ':addr'  => $address,
+                ':id'    => $id
             ]);
-
-            $message = "<p style='color: green;'>Success! Parent details updated.</p>";
             
-            // Refresh Data so the form shows new info immediately
-            $stmt = $pdo->prepare("SELECT * FROM Parents WHERE parent_id = :id");
-            $stmt->execute([':id' => $id]);
-            $parent = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            $message = "<div class='status-pill status-active'>Parent details updated successfully!</div>";
         } catch (PDOException $e) {
-            $message = "<p style='color: red;'>Error: " . $e->getMessage() . "</p>";
+            $message = "<div class='status-pill status-inactive'>Database Error: " . htmlspecialchars($e->getMessage()) . "</div>";
         }
     }
+}
+
+// 4. DATA FETCHING: Get current Parent & Linked Children
+try {
+    // Get Parent
+    $stmt = $pdo->prepare("SELECT * FROM Parents WHERE parent_id = :id");
+    $stmt->execute([':id' => $id]);
+    $parent = $stmt->fetch();
+
+    if (!$parent) { die("Error: Parent not found."); }
+
+    // Get Linked Children
+    $kids_sql = "SELECT Pupils.pupil_id, Pupils.full_name 
+                 FROM Pupils 
+                 JOIN Pupil_Parent ON Pupils.pupil_id = Pupil_Parent.pupil_id 
+                 WHERE Pupil_Parent.parent_id = :id";
+    $kids_stmt = $pdo->prepare($kids_sql);
+    $kids_stmt->execute([':id' => $id]);
+    $linked_kids = $kids_stmt->fetchAll();
+
+} catch (PDOException $e) {
+    die("Database Error: " . $e->getMessage());
 }
 ?>
 
@@ -63,38 +89,97 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Parent</title>
+    <title>Edit Parent - St Alphonsus</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        nav { width: 100%; max-width: 800px; }
+        /* Local styles for the link manager list */
+        .link-manager { margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+        .link-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .link-row span { font-weight: 500; font-size: 0.95rem; }
+        .unlink-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .unlink-btn:hover { background: var(--danger); color: white; }
     </style>
 </head>
-<body>
+<body class="centered-layout">
 
-    <?php include '../nav.php'; ?>
+    <div class="form-card">
+        <h2 class="mb-4">Edit Parent Record</h2>
+        
+        <?php if ($message): ?>
+            <div style="margin-bottom: 20px;"><?= $message ?></div>
+        <?php endif; ?>
 
-    <h1>Edit Parent: <?= htmlspecialchars($parent['full_name']) ?></h1>
-    
-    <?= $message ?>
+        <form method="POST">
+            <input type="hidden" name="update_parent" value="true">
+            
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" value="<?= htmlspecialchars($parent['full_name']) ?>" required>
+            </div>
 
-    <form method="POST">
-        <label>Full Name: *</label>
-        <input type="text" name="full_name" value="<?= htmlspecialchars($parent['full_name']) ?>">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" value="<?= htmlspecialchars($parent['email']) ?>">
+            </div>
 
-        <label>Email:</label>
-        <input type="text" name="email" value="<?= htmlspecialchars($parent['email']) ?>">
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone" value="<?= htmlspecialchars($parent['phone']) ?>" required>
+            </div>
 
-        <label>Phone: *</label>
-        <input type="text" name="phone" value="<?= htmlspecialchars($parent['phone']) ?>">
+            <div class="form-group">
+                <label>Home Address</label>
+                <input type="text" name="address" value="<?= htmlspecialchars($parent['address']) ?>">
+            </div>
 
-        <label>Address:</label>
-        <input type="text" name="address" value="<?= htmlspecialchars($parent['address']) ?>">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Save Changes</button>
+        </form>
 
-        <button type="submit">Update Parent</button>
-    </form>
+        <div class="link-manager">
+            <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-main);">Linked Children</h3>
 
-    <a href="parents.php" class="back-link">← Back to Parent List</a>
+            <?php if (count($linked_kids) > 0): ?>
+                <?php foreach ($linked_kids as $kid): ?>
+                    <div class="link-row">
+                        <span><?= htmlspecialchars($kid['full_name']) ?></span>
+                        
+                        <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to remove this link?');">
+                            <input type="hidden" name="unlink_pupil_id" value="<?= $kid['pupil_id'] ?>">
+                            <button type="submit" class="unlink-btn">Unlink</button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">
+                    No children currently linked to this parent.
+                </p>
+            <?php endif; ?>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <a href="parents.php" class="btn btn-sm" style="width: 100%; text-align: center; background: transparent; color: var(--text-muted);">
+                &larr; Back to Parents List
+            </a>
+        </div>
+    </div>
 
 </body>
 </html>
