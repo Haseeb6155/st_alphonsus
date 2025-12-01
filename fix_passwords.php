@@ -45,7 +45,7 @@ $users = [
                     
                 } catch (PDOException $e) {
                     echo "<div class='status-pill status-inactive'>
-                            ❌ Error for $username: " . $e->getMessage() . "
+                             Error for $username: " . $e->getMessage() . "
                           </div>";
                 }
             }
