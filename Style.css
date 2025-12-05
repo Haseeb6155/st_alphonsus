@@ -1,24 +1,23 @@
 /* --- 1. CSS VARIABLES (The Design Tokens) --- */
 :root {
     /* Backgrounds */
-    --bg-body: #111827;       /* Deep dark blue-grey (Main Background) */
-    --bg-card: #1f2937;       /* Slightly lighter (Cards/Tables) */
-    --bg-input: #374151;      /* Inputs fields */
+    --bg-body: #111827;       
+    --bg-card: #1f2937;       
+    --bg-input: #374151;      
     
     /* Text Colors */
-    --text-main: #f9fafb;     /* Bright White for headings */
-    --text-muted: #9ca3af;    /* Grey for secondary text */
-    
-    /* Brand Colors */
-    --primary: #3b82f6;       /* Bright Blue (Buttons/Links) */
-    --primary-hover: #2563eb; /* Darker Blue (Hover state) */
-    --danger: #ef4444;        /* Red (Delete/Absent) */
-    --success: #10b981;       /* Green (Add/Present) */
-    --warning: #f59e0b;       /* Orange (Late/Edit) */
+    --text-main: #f9fafb;     
+    --text-muted: #9ca3af;    
 
+    /* Brand Colors */
+    --primary: #3b82f6;       
+    --primary-hover: #2563eb; 
+    --danger: #ef4444;        
+    --success: #10b981;       
+    --warning: #f59e0b;       
     /* Spacing & Borders */
-    --radius: 8px;            /* Rounded corners */
-    --border: 1px solid #374151; /* Subtle borders */
+    --radius: 8px;            
+    --border: 1px solid #374151; 
 }
 
 /* --- 2. GLOBAL RESET & TYPOGRAPHY --- */
