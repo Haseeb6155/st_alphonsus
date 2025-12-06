@@ -2,10 +2,15 @@
 /*
     CLASS DASHBOARD
     ---------------
-    Displays classes as colorful cards like your screenshot.
+    Displays classes as colorful cards.
 */
 include '../db.php';
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// --- THE FIX ---
+// We must define the role here so the Navbar knows who is logged in.
+$role = $_SESSION['role'] ?? 'guest';
+// ----------------
 
 // Fetch Classes AND count how many pupils are in each class
 $sql = "SELECT Classes.*, Teachers.full_name, 
@@ -98,13 +103,11 @@ $classes = $stmt->fetchAll();
             
             <?php foreach ($classes as $class): ?>
                 <div class="class-card">
-                    <!-- 1. Colorful Header -->
                     <div class="card-header <?= $gradients[$i % 4] ?>">
                         <div class="class-title"><?= htmlspecialchars($class['class_name']) ?></div>
                         <div class="teacher-name"><?= htmlspecialchars($class['full_name'] ?? 'No Teacher Assigned') ?></div>
                     </div>
 
-                    <!-- 2. Statistics Body -->
                     <div class="card-body">
                         <div class="stat-row">
                             <div class="stat-item">
@@ -135,6 +138,7 @@ $classes = $stmt->fetchAll();
             <?php endforeach; ?>
         </div>
     </div>
-             <?php include '../footer.php'; ?>   
+    
+    <?php include '../footer.php'; ?>   
 </body>
 </html>

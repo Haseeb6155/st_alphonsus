@@ -3,12 +3,14 @@ include '../db.php';
 $message = "";
 
 // Fetch teachers for dropdown
-$teachers = $pdo->query("SELECT * FROM teachers")->fetchAll();
+$teachers = $pdo->query("SELECT * FROM teachers ORDER BY full_name ASC")->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $class_name = trim($_POST['class_name']);
     $capacity = trim($_POST['capacity']);
-    $teacher_id = $_POST['teacher_id'];
+    
+    // Fix: If "-- No Teacher --" is selected, set to NULL for the database
+    $teacher_id = !empty($_POST['teacher_id']) ? $_POST['teacher_id'] : null;
 
     if (empty($class_name) || empty($capacity)) {
         $message = "<div class='status-pill status-inactive'>Class Name and Capacity required!</div>";
@@ -20,8 +22,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             $message = "<div class='status-pill status-active'>Success! Class Created.</div>";
             header("refresh:1;url=classes.php");
+
         } catch (PDOException $e) {
-            $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
+            // --- THE FIX FOR FIGURE E.13 ---
+            // If the error code is 23000, it means a Duplicate Entry or Constraint Violation.
+            if ($e->getCode() == 23000) {
+                 $message = "<div class='status-pill status-inactive'>Action Failed: This Teacher is already assigned to another class!</div>";
+            } else {
+                 // Hide the raw stack trace for security
+                 $message = "<div class='status-pill status-inactive'>System Error. Please try again later.</div>";
+            }
         }
     }
 }
@@ -43,12 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form method="POST">
             <div class="form-group">
                 <label>Class Name</label>
-                <input type="text" name="class_name" placeholder="e.g. Year 5B">
+                <input type="text" name="class_name" placeholder="e.g. Year 5B" required>
             </div>
             
             <div class="form-group">
                 <label>Capacity</label>
-                <input type="number" name="capacity" placeholder="e.g. 30">
+                <input type="number" name="capacity" placeholder="e.g. 30" required>
             </div>
 
             <div class="form-group">

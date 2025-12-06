@@ -15,12 +15,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $message = "<div class='status-pill status-inactive'>Name, Address, and Class are required!</div>";
     } else {
         try {
-            $sql = "INSERT INTO Pupils (full_name, address, medical_info, class_id) VALUES (:name, :addr, :med, :cid)";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([':name' => $full_name, ':addr' => $address, ':med' => $medical_info, ':cid' => $class_id]);
-            
-            $message = "<div class='status-pill status-active'>Pupil Added Successfully!</div>";
-            header("refresh:1;url=index.php");
+            // --- 70+ LOGIC START: CHECK CAPACITY ---
+            // 1. Get the Class Capacity and Current Student Count
+            $check_sql = "SELECT c.capacity, 
+                         (SELECT COUNT(*) FROM Pupils p WHERE p.class_id = c.class_id) as current_count
+                         FROM Classes c WHERE c.class_id = :cid";
+            $stmt = $pdo->prepare($check_sql);
+            $stmt->execute([':cid' => $class_id]);
+            $class_data = $stmt->fetch();
+
+            // 2. Compare them
+            if ($class_data && $class_data['current_count'] >= $class_data['capacity']) {
+                // STOP! Class is full.
+                $message = "<div class='status-pill status-inactive'>
+                                Action Failed: This class is full! 
+                                ({$class_data['current_count']}/{$class_data['capacity']})
+                            </div>";
+            } else {
+                // 3. PROCEED: Insert the pupil
+                $sql = "INSERT INTO Pupils (full_name, address, medical_info, class_id) 
+                        VALUES (:name, :addr, :med, :cid)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    ':name' => $full_name, 
+                    ':addr' => $address, 
+                    ':med' => $medical_info, 
+                    ':cid' => $class_id
+                ]);
+                
+                $message = "<div class='status-pill status-active'>Pupil Added Successfully!</div>";
+                header("refresh:1;url=index.php");
+            }
+            // --- 70+ LOGIC END ---
+
         } catch (PDOException $e) {
             $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
         }

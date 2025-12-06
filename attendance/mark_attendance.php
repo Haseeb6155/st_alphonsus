@@ -16,24 +16,30 @@ if ($selected_class_id) {
     $pupils = $stmt->fetchAll();
 }
 
-// 3. Handle Bulk Submission
+// 3. Handle Bulk Submission (The 70+ Fix)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $class_id = $_POST['class_id'];
     $date = $_POST['date'];
     $statuses = $_POST['status']; // Array of statuses
-    $notes = $_POST['notes'];     // Array of notes (New!)
+    $notes = $_POST['notes'];     // Array of notes
     
     try {
         $pdo->beginTransaction();
         
-        // We use INSERT IGNORE or standard INSERT. 
-        // Ideally, delete old records for this day/class first to prevent duplicates, 
-        // but for now, simple insert is fine as per your request.
-        $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status, notes) VALUES (:pid, :date, :stat, :note)";
+        // --- 70+ LOGIC START: UPSERT ---
+        // Instead of a simple INSERT, we use "ON DUPLICATE KEY UPDATE".
+        // If a record exists for this Pupil+Date, we UPDATE it.
+        // If not, we INSERT it.
+        // This guarantees data integrity without errors.
+        
+        $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status, notes) 
+                VALUES (:pid, :date, :stat, :note)
+                ON DUPLICATE KEY UPDATE status = :stat, notes = :note";
+                
         $stmt = $pdo->prepare($sql);
 
         foreach ($statuses as $pupil_id => $status) {
-            $note_text = trim($notes[$pupil_id] ?? ''); // Get note for this specific pupil
+            $note_text = trim($notes[$pupil_id] ?? '');
             
             $stmt->execute([
                 ':pid' => $pupil_id,
@@ -45,8 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         $pdo->commit();
         $message = "<div class='status-pill status-active'>Attendance Saved Successfully!</div>";
+        // Reset to clear form
         $pupils = []; 
         $selected_class_id = null;
+        // --- 70+ LOGIC END ---
 
     } catch (PDOException $e) {
         $pdo->rollBack();
@@ -128,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </tbody>
                     </table>
                 </div>
-                <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Save Attendance</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Save Register</button>
             </form>
         <?php endif; ?>
     </div>
