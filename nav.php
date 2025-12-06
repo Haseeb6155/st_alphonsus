@@ -1,21 +1,14 @@
 <?php
-// PHP LOGIC: Check who is logged in
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-// Redirect to login if user tries to access this file directly without logging in
 if (!isset($_SESSION['user_id'])) {
-    // Adjust path dynamically or hardcode if your folder structure is fixed
     header("Location: /st_alphonsus/login.php");
     exit;
 }
-
 $role = $_SESSION['role'] ?? 'guest';
-$current_page = basename($_SERVER['PHP_SELF']); // Get current file name for active state
+$current_page = basename($_SERVER['PHP_SELF']); 
 ?>
 
-<!-- START NAV BAR HTML -->
 <nav>
     <div class="nav-brand">
         St Alphonsus
@@ -25,13 +18,7 @@ $current_page = basename($_SERVER['PHP_SELF']); // Get current file name for act
     </div>
     
     <div class="nav-links">
-        <!-- 
-           Dynamic Links: 
-           We use simple PHP 'if' statements to decide which class='active' to add.
-           This makes the underline effect work.
-        -->
-
-        <!-- Library is available to everyone -->
+        
         <a href="/st_alphonsus/libraryy/library.php" 
            class="<?= $current_page == 'library.php' ? 'active' : '' ?>">
            Library
@@ -59,15 +46,15 @@ $current_page = basename($_SERVER['PHP_SELF']); // Get current file name for act
                class="<?= $current_page == 'classes.php' ? 'active' : '' ?>">
                Classes
             </a>
-            
+        <?php endif; ?>
+
+        <?php if ($role == 'admin' || $role == 'teacher'): ?>
             <a href="/st_alphonsus/parents/parents.php" 
                class="<?= $current_page == 'parents.php' ? 'active' : '' ?>">
                Parents
             </a>
         <?php endif; ?>
 
-        <!-- Logout Button -->
         <a href="/st_alphonsus/logout.php" class="logout-btn">Logout</a>
     </div>
 </nav>
-
