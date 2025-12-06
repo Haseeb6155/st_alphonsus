@@ -1,19 +1,11 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
-
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /st_alphonsus/login.php");
-    exit;
-}
-$role = $_SESSION['role'] ?? 'guest';
-$current_page = basename($_SERVER['PHP_SELF']); 
-?>
-
 <nav>
     <div class="nav-brand">
         St Alphonsus
         <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">
-            <?= ucfirst($role) ?> Portal
+            <?= ucfirst($role) ?> Portal 
+            <span style="color: var(--primary); margin-left: 5px;">
+               (<?= htmlspecialchars($_SESSION['username'] ?? '') ?>)
+            </span>
         </span>
     </div>
     
