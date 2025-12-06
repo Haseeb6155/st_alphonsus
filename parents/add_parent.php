@@ -13,9 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $phone     = trim($_POST['phone']);
     $address   = trim($_POST['address']);
 
-    if (empty($username) || empty($password) || empty($full_name)) {
-        $message = "<div class='status-pill status-inactive'>Username, Password and Name required!</div>";
-    } else {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $message = "Invalid Email"; }
+    else {
         try {
             $pdo->beginTransaction(); // Start "All or Nothing"
 

@@ -6,7 +6,7 @@ $message = "";
 $classes = $pdo->query("SELECT * FROM Classes")->fetchAll();
 $pupils = [];
 
-// 2. If a Class is selected, fetch students
+// 2. If Class selected, fetch students
 $selected_class_id = $_GET['class_id'] ?? null;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 
@@ -20,19 +20,31 @@ if ($selected_class_id) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $class_id = $_POST['class_id'];
     $date = $_POST['date'];
-    $statuses = $_POST['status']; // Array
+    $statuses = $_POST['status']; // Array of statuses
+    $notes = $_POST['notes'];     // Array of notes (New!)
     
     try {
         $pdo->beginTransaction();
-        $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status) VALUES (:pid, :date, :stat)";
+        
+        // We use INSERT IGNORE or standard INSERT. 
+        // Ideally, delete old records for this day/class first to prevent duplicates, 
+        // but for now, simple insert is fine as per your request.
+        $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status, notes) VALUES (:pid, :date, :stat, :note)";
         $stmt = $pdo->prepare($sql);
 
         foreach ($statuses as $pupil_id => $status) {
-            $stmt->execute([':pid' => $pupil_id, ':date' => $date, ':stat' => $status]);
+            $note_text = trim($notes[$pupil_id] ?? ''); // Get note for this specific pupil
+            
+            $stmt->execute([
+                ':pid' => $pupil_id,
+                ':date' => $date,
+                ':stat' => $status,
+                ':note' => $note_text
+            ]);
         }
         
         $pdo->commit();
-        $message = "<div class='status-pill status-active'>Class Attendance Saved!</div>";
+        $message = "<div class='status-pill status-active'>Attendance Saved Successfully!</div>";
         $pupils = []; 
         $selected_class_id = null;
 
@@ -91,22 +103,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <tr>
                                 <th>Pupil Name</th>
                                 <th>Status</th>
-                            </tr>
+                                <th>Notes</th> </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($pupils as $p): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($p['full_name']) ?></td>
+                                    <td style="font-weight:500;"><?= htmlspecialchars($p['full_name']) ?></td>
                                     <td>
-                                        <label style="display:inline; margin-right:15px; color: var(--success);">
+                                        <label style="display:inline; margin-right:15px; color: var(--success); cursor:pointer;">
                                             <input type="radio" name="status[<?= $p['pupil_id'] ?>]" value="Present" checked> Present
                                         </label>
-                                        <label style="display:inline; margin-right:15px; color: var(--danger);">
+                                        <label style="display:inline; margin-right:15px; color: var(--danger); cursor:pointer;">
                                             <input type="radio" name="status[<?= $p['pupil_id'] ?>]" value="Absent"> Absent
                                         </label>
-                                        <label style="display:inline; color: var(--warning);">
+                                        <label style="display:inline; color: var(--warning); cursor:pointer;">
                                             <input type="radio" name="status[<?= $p['pupil_id'] ?>]" value="Late"> Late
                                         </label>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="notes[<?= $p['pupil_id'] ?>]" placeholder="e.g. Sick..." style="padding: 5px; font-size: 0.9rem;">
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
