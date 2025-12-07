@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 04, 2025 at 04:30 PM
+-- Generation Time: Dec 07, 2025 at 06:57 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,23 +32,32 @@ CREATE TABLE `attendance` (
   `pupil_id` int(11) DEFAULT NULL,
   `attendance_date` date DEFAULT NULL,
   `status` varchar(50) DEFAULT NULL,
-  `notes` text DEFAULT NULL
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `attendance`
 --
 
-INSERT INTO `attendance` (`attendance_id`, `pupil_id`, `attendance_date`, `status`, `notes`) VALUES
-(1, 6, '2025-11-30', 'Present', ''),
-(2, 4, '2025-11-30', 'Absent', 'Sick'),
-(3, 1, '2025-11-30', 'Present', ''),
-(4, 3, '2025-11-30', 'Late', 'Rain'),
-(5, 5, '2025-11-30', 'Absent', 'Cough'),
-(6, 7, '2025-11-30', 'Present', ''),
-(7, 2, '2025-11-30', 'Absent', 'No Reason'),
-(8, 6, '2025-12-02', 'Absent', 'Blob'),
-(9, 1, '2025-12-03', 'Absent', '');
+INSERT INTO `attendance` (`attendance_id`, `pupil_id`, `attendance_date`, `status`, `notes`, `created_at`) VALUES
+(1, 6, '2025-11-30', 'Present', '', '2025-12-07 16:38:29'),
+(2, 4, '2025-11-30', 'Absent', 'Sick', '2025-12-07 16:38:29'),
+(3, 1, '2025-11-30', 'Present', '', '2025-12-07 16:38:29'),
+(4, 3, '2025-11-30', 'Late', 'Rain', '2025-12-07 16:38:29'),
+(5, 5, '2025-11-30', 'Absent', 'Cough', '2025-12-07 16:38:29'),
+(6, 7, '2025-11-30', 'Present', '', '2025-12-07 16:38:29'),
+(7, 2, '2025-11-30', 'Absent', 'No Reason', '2025-12-07 16:38:29'),
+(8, 6, '2025-12-02', 'Absent', 'Blob', '2025-12-07 16:38:29'),
+(9, 1, '2025-12-03', 'Absent', '', '2025-12-07 16:38:29'),
+(12, 12, '2025-12-06', 'Present', NULL, '2025-12-07 16:38:29'),
+(15, 7, '2025-12-06', 'Present', NULL, '2025-12-07 16:38:29'),
+(16, 6, '2025-12-06', 'Late', 'Car problem', '2025-12-07 16:38:29'),
+(18, 4, '2025-12-01', 'Absent', '', '2025-12-07 16:38:29'),
+(19, 3, '2025-12-01', 'Late', '', '2025-12-07 16:38:29'),
+(21, 2, '2025-12-03', 'Present', '', '2025-12-07 16:38:29'),
+(22, 1, '2025-12-07', 'Present', '', '2025-12-07 17:10:52'),
+(23, 2, '2025-12-07', 'Present', '', '2025-12-07 17:10:52');
 
 -- --------------------------------------------------------
 
@@ -68,7 +77,7 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`class_id`, `teacher_id`, `class_name`, `capacity`) VALUES
-(1, 1, 'Reception', 22),
+(1, 1, 'Reception', 30),
 (2, 2, 'Year One', 18),
 (3, 3, 'Year Two', 15),
 (4, 7, 'Year Three', 25);
@@ -95,7 +104,8 @@ INSERT INTO `library_books` (`book_id`, `title`, `author`, `year_published`, `av
 (1, 'The Gruffalo', 'Julia Donaldson', 1999, 1),
 (2, 'Fantastic Mr Fox', 'Roald Dahl', 1970, 1),
 (3, 'Harry Potter and the Philosophers Stone', 'J.K. Rowling', 1995, 0),
-(7, 'Harry Potter', 'J.K. Rowling', 1997, 1);
+(7, 'Harry Potter', 'J.K. Rowling', 1997, 1),
+(8, 'Subar', 'James Bonds', 2002, 1);
 
 -- --------------------------------------------------------
 
@@ -117,10 +127,10 @@ CREATE TABLE `parents` (
 --
 
 INSERT INTO `parents` (`parent_id`, `full_name`, `address`, `email`, `phone`, `user_id`) VALUES
-(1, 'James Potter', '4 Privet Drive, Surrey', 'james@ex.com', '07811 112233', NULL),
-(2, 'Molly Weasley', 'The Burrow, Devon', 'molly@burrow.com', '07811 445566', NULL),
-(3, 'Lucius Malfoy', 'Malfoy Manor, Wiltshire', 'lucius@manor.com', '07811 778899', NULL),
-(4, 'Xenophilius Lovegood', 'The Rookery, Ottery', 'quibbler@mag.com', '07811 001122', NULL);
+(9, 'Sarah Jenkins', '14 Maple Drive, Manchester, M1 2AB', 'sarah.j@example.com', '07700 900101', 29),
+(10, 'Michael Chang', '42 High Street, Liverpool, L3 4XY', 'm.chang@example.com', '07700 900202', 30),
+(11, 'Emily O\'Connor', '7 Oak Avenue, Birmingham, B2 5CD', 'emily.oconnor@example.com', '07700 900303', 31),
+(12, 'David Okonjo', 'Flat 5, Riverside Apts, London, SE1 7TH', 'd.okonjo@example.com', '07700 900404', 32);
 
 -- --------------------------------------------------------
 
@@ -133,21 +143,23 @@ CREATE TABLE `pupils` (
   `class_id` int(11) DEFAULT NULL,
   `full_name` varchar(255) NOT NULL,
   `address` varchar(255) DEFAULT NULL,
-  `medical_info` text DEFAULT NULL
+  `medical_info` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `pupils`
 --
 
-INSERT INTO `pupils` (`pupil_id`, `class_id`, `full_name`, `address`, `medical_info`) VALUES
-(1, 1, 'Harry Potter', '4 Privet Drive, Surrey', 'Needs glasses, scar pain'),
-(2, 1, 'Ron Weasley', '123 Test Lane', 'Fear of spiders'),
-(3, 2, 'Hermione Granger', '10 Heathgate, Hampstead', 'None'),
-(4, 2, 'Draco Malfoy', 'Malfoy Manor, Wiltshire', 'General allergies'),
-(5, 3, 'Luna Lovegood', 'The Rookery, Ottery', 'None'),
-(6, 3, 'Cedric Diggory', 'White House, Near Ottery', 'None'),
-(7, 4, 'Neville Longbottom', 'Longbottom Manor', 'Memory issues');
+INSERT INTO `pupils` (`pupil_id`, `class_id`, `full_name`, `address`, `medical_info`, `created_at`) VALUES
+(1, 1, 'Harry Potter', '4 Privet Drive, Surrey', 'Needs glasses, scar pain', '2025-12-07 16:38:29'),
+(2, 1, 'Ron Weasley', '123 Test Lane', 'Fear of spiders', '2025-12-07 16:38:29'),
+(3, 2, 'Hermione Granger', '10 Heathgate, Hampstead', 'None', '2025-12-07 16:38:29'),
+(4, 2, 'Draco Malfoy', 'Malfoy Manor, Wiltshire', 'General allergies', '2025-12-07 16:38:29'),
+(5, 3, 'Luna Lovegood', 'The Rookery, Ottery', 'None', '2025-12-07 16:38:29'),
+(6, 3, 'Cedric Diggory', 'White House, Near Ottery', 'None', '2025-12-07 16:38:29'),
+(7, 4, 'Neville Longbottom', 'Longbottom Manor', 'Memory issues', '2025-12-07 16:38:29'),
+(12, 4, 'Neil Armstone', 'America', 'Healthy Kid', '2025-12-07 16:38:29');
 
 -- --------------------------------------------------------
 
@@ -165,15 +177,14 @@ CREATE TABLE `pupil_parent` (
 --
 
 INSERT INTO `pupil_parent` (`pupil_id`, `parent_id`) VALUES
-(1, 1),
-(2, 2),
-(3, 3),
-(4, 3),
-(5, 4),
-(6, 1),
-(6, 3),
-(7, 1),
-(7, 4);
+(1, 11),
+(2, 9),
+(3, 11),
+(4, 12),
+(5, 10),
+(6, 12),
+(7, 9),
+(12, 10);
 
 -- --------------------------------------------------------
 
@@ -187,7 +198,6 @@ CREATE TABLE `teachers` (
   `address` varchar(255) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `annual_salary` decimal(10,2) DEFAULT NULL,
-  `background_check` tinyint(1) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -195,11 +205,11 @@ CREATE TABLE `teachers` (
 -- Dumping data for table `teachers`
 --
 
-INSERT INTO `teachers` (`teacher_id`, `full_name`, `address`, `phone`, `annual_salary`, `background_check`, `user_id`) VALUES
-(1, 'Rubeus Hagrid', '12 Maple Dr', '07700900123', 45000.00, 1, NULL),
-(2, 'Mrs. Sarah Jones', '45 Oak Ln', '07700900456', 38500.00, 1, NULL),
-(3, 'Miss Emily Davis', '89 Pine St', '07700900789', 32000.00, 0, NULL),
-(7, 'Severus Katie', 'Spinner\'s End, Cokeworth', '07700 900102', 52000.00, NULL, NULL);
+INSERT INTO `teachers` (`teacher_id`, `full_name`, `address`, `phone`, `annual_salary`, `user_id`) VALUES
+(1, 'Rubeus Hagrid', '12 Maple Dr', '07700900123', 45000.00, 20),
+(2, 'Mrs. Sarah Jones', '45 Oak Ln', '07700900456', 38500.00, 17),
+(3, 'Miss Emily Davis', '89 Pine St', '07700900789', 32000.00, 21),
+(7, 'Severus Katie', 'Spinner\'s End, Cokeworth', '07700 900102', 52000.00, 22);
 
 -- --------------------------------------------------------
 
@@ -221,7 +231,14 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`user_id`, `username`, `password`, `role`) VALUES
 (16, 'admin', '$2y$10$DyVJeqlHUT9/cy78Ui2udep2XBaApOOMux4xDSOhxm6OiXZNbDREC', 'admin'),
 (17, 'teacher', '$2y$10$9rr31A8m8FGp9U6zkn.DqOfA05HJ.Bre2P96CpB6UrYinvNU30NKm', 'teacher'),
-(18, 'parent', '$2y$10$l3grguVDbntd4nd/NiYg7.Kl1QxtJgw5zIdcl6MMY6cj46wqYqCFW', 'parent');
+(18, 'parent', '$2y$10$l3grguVDbntd4nd/NiYg7.Kl1QxtJgw5zIdcl6MMY6cj46wqYqCFW', 'parent'),
+(20, 'hagrid', '$2y$10$9rr31A8m8FGp9U6zkn.DqOfA05HJ.Bre2P96CpB6UrYinvNU30NKm', 'teacher'),
+(21, 'emily', '$2y$10$9rr31A8m8FGp9U6zkn.DqOfA05HJ.Bre2P96CpB6UrYinvNU30NKm', 'teacher'),
+(22, 'severus', '$2y$10$9rr31A8m8FGp9U6zkn.DqOfA05HJ.Bre2P96CpB6UrYinvNU30NKm', 'teacher'),
+(29, 'sjenkins', '$2y$10$ZRKw3igoB3GsgcB0joC.O.CIA/nVUt3Hp/Q94cRyQS5LXM0Neqi7a', 'parent'),
+(30, 'mchang88', '$2y$10$8BxHPBpSUXOwp6X2v9IeYusfhEfHcJdkikqKLa9meZIAiXSIOXuxG', 'parent'),
+(31, 'emily_oc', '$2y$10$IeaprioxViT9NBYh7cSJT.Fx2pTNh58AxdD8jM9PFH0r8rn4fi4g.', 'parent'),
+(32, 'david_o', '$2y$10$Qy9MmpFJiMmx7r3GZZev2OtiVQLfidbC7/QR1218ZFxRVg.RL9RGS', 'parent');
 
 --
 -- Indexes for dumped tables
@@ -232,7 +249,7 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `role`) VALUES
 --
 ALTER TABLE `attendance`
   ADD PRIMARY KEY (`attendance_id`),
-  ADD KEY `pupil_id` (`pupil_id`);
+  ADD UNIQUE KEY `unique_attendance` (`pupil_id`,`attendance_date`);
 
 --
 -- Indexes for table `classes`
@@ -290,43 +307,43 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `class_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `library_books`
 --
 ALTER TABLE `library_books`
-  MODIFY `book_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `book_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `parents`
 --
 ALTER TABLE `parents`
-  MODIFY `parent_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `parent_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `pupils`
 --
 ALTER TABLE `pupils`
-  MODIFY `pupil_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `pupil_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `teachers`
 --
 ALTER TABLE `teachers`
-  MODIFY `teacher_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `teacher_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- Constraints for dumped tables
