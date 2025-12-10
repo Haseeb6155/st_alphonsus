@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } catch (PDOException $e) {
             $pdo->rollBack(); // Undo if error
             if ($e->getCode() == 23000) {
-                $message = "<div class='status-pill status-inactive'>Username already exists!</div>";
+                // This will print the REAL reason the database is angry
+$message = "<div class='status-pill status-inactive'>DATABASE ERROR: " . $e->getMessage() . "</div>";
             } else {
                 $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
             }

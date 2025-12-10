@@ -1,4 +1,14 @@
 <?php
+session_start();
+
+// Check if the user is logged in AND if they are an admin
+// (You can adjust 'admin' to 'teacher' if teachers should also have access)
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    // If not authorized, kick them back to login
+    header("Location: ../login.php"); 
+    exit;
+}
+
 include '../db.php';
 
 if (isset($_GET['id'])) {

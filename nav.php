@@ -11,11 +11,6 @@
     
     <div class="nav-links">
         
-        <a href="/st_alphonsus/libraryy/library.php" 
-           class="<?= $current_page == 'library.php' ? 'active' : '' ?>">
-           Library
-        </a>
-
         <?php if ($role == 'teacher' || $role == 'admin' || $role == 'parent'): ?>
             <a href="/st_alphonsus/Pupils/index.php" 
                class="<?= ($current_page == 'index.php' || $current_page == 'add_pupil.php') ? 'active' : '' ?>">

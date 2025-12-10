@@ -1,4 +1,16 @@
 <?php
+session_start();
+
+// SECURITY CHECK: Allow Admins AND Teachers (Kick out Parents or Guests)
+if (!isset($_SESSION['role']) || $_SESSION['role'] == 'parent') {
+    // Redirect unauthorized users
+    header("Location: ../login.php"); 
+    exit;
+}
+
+include '../db.php';
+
+
 include '../db.php';
 
 if (isset($_GET['id'])) {

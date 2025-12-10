@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role']     = $user['role'];
 
             // Redirect Logic based on Role
-            $redirectPath = ($user['role'] === 'parent') ? 'libraryy/library.php' : 'Pupils/index.php';
+           $redirectPath = ($user['role'] === 'parent') ? 'attendance/attendance.php' : 'Pupils/index.php';
             header("Location: " . $redirectPath);
             exit;
 
