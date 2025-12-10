@@ -1,5 +1,11 @@
 <?php
 include '../db.php';
+
+// --- THE FIX: Start Session & Define Role ---
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+$role = $_SESSION['role'] ?? 'guest';
+// -------------------------------------------
+
 $message = "";
 
 // 1. Fetch Classes for dropdown
@@ -16,49 +22,48 @@ if ($selected_class_id) {
     $pupils = $stmt->fetchAll();
 }
 
-// 3. Handle Bulk Submission (The 70+ Fix)
+// 3. Handle Bulk Submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $class_id = $_POST['class_id'];
     $date = $_POST['date'];
-    $statuses = $_POST['status']; // Array of statuses
-    $notes = $_POST['notes'];     // Array of notes
     
-    try {
-        $pdo->beginTransaction();
-        
-        // --- 70+ LOGIC START: UPSERT ---
-        // Instead of a simple INSERT, we use "ON DUPLICATE KEY UPDATE".
-        // If a record exists for this Pupil+Date, we UPDATE it.
-        // If not, we INSERT it.
-        // This guarantees data integrity without errors.
-        
-        $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status, notes) 
-                VALUES (:pid, :date, :stat, :note)
-                ON DUPLICATE KEY UPDATE status = :stat, notes = :note";
-                
-        $stmt = $pdo->prepare($sql);
-
-        foreach ($statuses as $pupil_id => $status) {
-            $note_text = trim($notes[$pupil_id] ?? '');
+    // Safety check: ensure arrays exist to prevent errors if form is empty
+    $statuses = $_POST['status'] ?? []; 
+    $notes = $_POST['notes'] ?? [];     
+    
+    if (!empty($statuses)) {
+        try {
+            $pdo->beginTransaction();
             
-            $stmt->execute([
-                ':pid' => $pupil_id,
-                ':date' => $date,
-                ':stat' => $status,
-                ':note' => $note_text
-            ]);
-        }
-        
-        $pdo->commit();
-        $message = "<div class='status-pill status-active'>Attendance Saved Successfully!</div>";
-        // Reset to clear form
-        $pupils = []; 
-        $selected_class_id = null;
-        // --- 70+ LOGIC END ---
+            // UPSERT LOGIC (Distinction Level)
+            $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status, notes) 
+                    VALUES (:pid, :date, :stat, :note)
+                    ON DUPLICATE KEY UPDATE status = :stat, notes = :note";
+                    
+            $stmt = $pdo->prepare($sql);
 
-    } catch (PDOException $e) {
-        $pdo->rollBack();
-        $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
+            foreach ($statuses as $pupil_id => $status) {
+                $note_text = trim($notes[$pupil_id] ?? '');
+                
+                $stmt->execute([
+                    ':pid' => $pupil_id,
+                    ':date' => $date,
+                    ':stat' => $status,
+                    ':note' => $note_text
+                ]);
+            }
+            
+            $pdo->commit();
+            $message = "<div class='status-pill status-active'>Attendance Saved Successfully!</div>";
+            
+            // Reset to clear form
+            $pupils = []; 
+            $selected_class_id = null;
+
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
+        }
     }
 }
 ?>
@@ -71,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body>
     <?php include '../nav.php'; ?>
+    
     <div class="container">
         <div class="page-header">
             <h1>Class Register</h1>

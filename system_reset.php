@@ -14,7 +14,7 @@ $users = [
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fix Passwords</title>
+    <title>System Reset</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="centered-layout">
