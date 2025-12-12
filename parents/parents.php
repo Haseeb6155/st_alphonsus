@@ -8,9 +8,19 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] == 'parent') {
 }
 
 $role = $_SESSION['role'];
-$is_admin = ($role == 'admin'); // Boolean check: Is this user an Admin?
+$is_admin = ($role == 'admin');
 
-$parents = $pdo->query("SELECT * FROM Parents ORDER BY full_name ASC")->fetchAll();
+// 2. Fetch Parents AND their linked Children
+// We use a special SQL trick (GROUP_CONCAT) to list all kids in one box.
+$sql = "SELECT Parents.*, 
+        GROUP_CONCAT(Pupils.full_name SEPARATOR ', ') as children_names
+        FROM Parents
+        LEFT JOIN Pupil_Parent ON Parents.parent_id = Pupil_Parent.parent_id
+        LEFT JOIN Pupils ON Pupil_Parent.pupil_id = Pupils.pupil_id
+        GROUP BY Parents.parent_id
+        ORDER BY Parents.full_name ASC";
+
+$parents = $pdo->query($sql)->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -40,7 +50,7 @@ $parents = $pdo->query("SELECT * FROM Parents ORDER BY full_name ASC")->fetchAll
                 <thead>
                     <tr>
                         <th>Full Name</th>
-                        <th>Email</th>
+                        <th>Linked Student(s)</th> <th>Email</th>
                         <th>Phone</th>
                         <th>Address</th>
                         <?php if ($is_admin): ?>
@@ -52,9 +62,23 @@ $parents = $pdo->query("SELECT * FROM Parents ORDER BY full_name ASC")->fetchAll
                     <?php foreach ($parents as $p): ?>
                         <tr>
                             <td style="font-weight: 500;"><?= htmlspecialchars($p['full_name']) ?></td>
+
+                            <td>
+                                <?php if (!empty($p['children_names'])): ?>
+                                    <span class="status-pill status-active">
+                                        <?= htmlspecialchars($p['children_names']) ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span style="color: #666; font-style: italic;">No child linked</span>
+                                <?php endif; ?>
+                            </td>
+
                             <td style="color: var(--text-muted);"><?= htmlspecialchars($p['email']) ?></td>
                             <td><?= htmlspecialchars($p['phone']) ?></td>
-                            <td style="color: var(--text-muted);"><?= htmlspecialchars(substr($p['address'], 0, 20)) ?>...</td>
+                            
+                            <td style="color: var(--text-muted);">
+                                <?= htmlspecialchars(substr($p['address'], 0, 15)) ?>...
+                            </td>
                             
                             <?php if ($is_admin): ?>
                                 <td style="text-align: right;">
