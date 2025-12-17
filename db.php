@@ -1,23 +1,21 @@
 <?php
-
 $host = 'localhost';
 $dbname = 'st_alphonsus_school';
 $username = 'root';
-$password = ''; // Standard XAMPP/MAMP password is empty or 'root'
+$password = ''; 
 
 try {
-    // create a new PDO instance
+    // Establish database connection using PDO
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
     
-    // Set error mode to exception to catch any database issues immediately
+    // Enable exception handling for database errors
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Set default fetch mode to Associative Array (key-value pairs)
+    // Set default fetch mode to associative arrays
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 } catch(PDOException $e) {
-    // If connection fails, stop everything and show a clean error message
-    // In a real production app, we would log this to a file instead of showing the user
+    // Terminate script and display error on connection failure
     die("<h3>Database Connection Failed</h3><p>" . $e->getMessage() . "</p>");
 }
 ?>

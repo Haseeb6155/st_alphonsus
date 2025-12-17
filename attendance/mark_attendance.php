@@ -1,47 +1,63 @@
 <?php
 include '../db.php';
 
-// --- THE FIX: Start Session & Define Role ---
+// Start the session if not already active
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+// --- SECURITY CHECKS ---
+
+// Ensure the user is authenticated
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit(); 
+}
+
+// Verify authorization: Restrict access to staff members only
 $role = $_SESSION['role'] ?? 'guest';
-// -------------------------------------------
+if ($role == 'parent') {
+    die("Access Denied: Only teachers can mark attendance.");
+}
+// ------------------------
 
 $message = "";
 
-// 1. Fetch Classes for dropdown
+// Fetch available classes for the selection dropdown
 $classes = $pdo->query("SELECT * FROM Classes")->fetchAll();
 $pupils = [];
 
-// 2. If Class selected, fetch students
+// Retrieve filter parameters
 $selected_class_id = $_GET['class_id'] ?? null;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 
 if ($selected_class_id) {
+    // Fetch pupils for the selected class using a prepared statement
     $stmt = $pdo->prepare("SELECT * FROM Pupils WHERE class_id = :cid ORDER BY full_name ASC");
     $stmt->execute([':cid' => $selected_class_id]);
     $pupils = $stmt->fetchAll();
 }
 
-// 3. Handle Bulk Submission
+// --- HANDLE BULK SUBMISSION ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $class_id = $_POST['class_id'];
     $date = $_POST['date'];
     
-    // Safety check: ensure arrays exist to prevent errors if form is empty
+    // Retrieve submitted form data
     $statuses = $_POST['status'] ?? []; 
     $notes = $_POST['notes'] ?? [];     
     
     if (!empty($statuses)) {
         try {
+            // Begin a transaction to ensure atomicity (all records save or none do)
             $pdo->beginTransaction();
             
-            // UPSERT LOGIC (Distinction Level)
+            // SQL query to insert new records or update existing ones (Upsert)
             $sql = "INSERT INTO Attendance (pupil_id, attendance_date, status, notes) 
                     VALUES (:pid, :date, :stat, :note)
                     ON DUPLICATE KEY UPDATE status = :stat, notes = :note";
                     
             $stmt = $pdo->prepare($sql);
 
+            // Iterate through each pupil and execute the statement
             foreach ($statuses as $pupil_id => $status) {
                 $note_text = trim($notes[$pupil_id] ?? '');
                 
@@ -53,14 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ]);
             }
             
+            // Commit the transaction to save changes to the database
             $pdo->commit();
             $message = "<div class='status-pill status-active'>Attendance Saved Successfully!</div>";
             
-            // Reset to clear form
+            // Reset selection to prevent accidental resubmission
             $pupils = []; 
             $selected_class_id = null;
 
         } catch (PDOException $e) {
+            // Rollback transaction if an error occurs to maintain data integrity
             $pdo->rollBack();
             $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
         }

@@ -1,32 +1,48 @@
 <?php
 include '../db.php';
+
+session_start();
+
+// --- SECURITY CHECK ---
+// Restrict access: Only administrators and teachers are authorized to create parent accounts.
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] == 'parent') {
+    header("Location: ../index.php");
+    exit;
+}
+
 $message = "";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // 1. Login Credentials
+    // Retrieve and sanitize form input
     $username = trim($_POST['username']);
     $password = $_POST['password'];
     
-    // 2. Parent Profile Details
     $full_name = trim($_POST['full_name']);
     $email     = trim($_POST['email']);
     $phone     = trim($_POST['phone']);
     $address   = trim($_POST['address']);
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $message = "Invalid Email"; }
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { 
+        $message = "<div class='status-pill status-inactive'>Invalid Email</div>"; 
+    }
     else {
         try {
-            $pdo->beginTransaction(); // Start "All or Nothing"
+            // Initiate a database transaction to ensure atomicity
+            // This ensures both the User login and Parent profile are created together, or not at all.
+            $pdo->beginTransaction(); 
 
-            // A. Create User Login (Role = parent)
+            // 1. Create the Authentication Record
+            // Hash the password securely before storage
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             $sql_user = "INSERT INTO users (username, password, role) VALUES (:user, :pass, 'parent')";
             $stmt = $pdo->prepare($sql_user);
             $stmt->execute([':user' => $username, ':pass' => $hashed]);
             
-            $new_user_id = $pdo->lastInsertId(); // Get the new ID
+            // Retrieve the auto-generated ID from the 'users' table to link the parent profile
+            $new_user_id = $pdo->lastInsertId(); 
 
-            // B. Create Parent Profile (Linked via user_id)
+            // 2. Create the Parent Profile Linked to the User ID
             $sql_parent = "INSERT INTO Parents (full_name, email, phone, address, user_id) 
                            VALUES (:name, :email, :phone, :addr, :uid)";
             $stmt = $pdo->prepare($sql_parent);
@@ -38,15 +54,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ':uid'   => $new_user_id
             ]);
 
-            $pdo->commit(); // Save both
+            // Commit the transaction to save all changes
+            $pdo->commit(); 
             $message = "<div class='status-pill status-active'>Success! Parent Account Created.</div>";
             header("refresh:2;url=parents.php");
 
         } catch (PDOException $e) {
-            $pdo->rollBack(); // Undo if error
+            // Rollback the transaction on failure to maintain database integrity
+            $pdo->rollBack(); 
+            
+            // Handle unique constraint violations (e.g., Duplicate Username)
             if ($e->getCode() == 23000) {
-                // This will print the REAL reason the database is angry
-$message = "<div class='status-pill status-inactive'>DATABASE ERROR: " . $e->getMessage() . "</div>";
+                 $message = "<div class='status-pill status-inactive'>Error: Username already exists!</div>";
             } else {
                 $message = "<div class='status-pill status-inactive'>Error: " . $e->getMessage() . "</div>";
             }
@@ -65,8 +84,10 @@ $message = "<div class='status-pill status-inactive'>DATABASE ERROR: " . $e->get
     <div class="form-card">
         <h2 class="mb-4">Create Parent Account</h2>
         <?= $message ?>
+        
         <form method="POST">
             <h4 style="color:var(--primary); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Login Credentials</h4>
+            
             <div class="form-group">
                 <label>Username *</label>
                 <input type="text" name="username" required placeholder="e.g. parent01">
@@ -77,6 +98,7 @@ $message = "<div class='status-pill status-inactive'>DATABASE ERROR: " . $e->get
             </div>
 
             <h4 style="color:var(--primary); margin-top:20px; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Parent Details</h4>
+            
             <div class="form-group"><label>Full Name *</label><input type="text" name="full_name" required></div>
             <div class="form-group"><label>Email</label><input type="email" name="email"></div>
             <div class="form-group"><label>Phone</label><input type="text" name="phone"></div>

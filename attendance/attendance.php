@@ -1,24 +1,29 @@
 <?php
 include '../db.php';
+
+// Start the session if it is not already active
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-// 1. Get Current User Info
-$role = $_SESSION['role'] ?? 'guest';
-$current_user_id = $_SESSION['user_id'] ?? 0;
+// Redirect to login page if the user is not authenticated
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit(); 
+}
 
-// 2. Fetch Classes (Only needed for Admins/Teachers)
+$role = $_SESSION['role'];
+$current_user_id = $_SESSION['user_id'];
+
+// Fetch class list for the dropdown filter (Staff only)
 $classes = [];
 if ($role != 'parent') {
     $classes = $pdo->query("SELECT * FROM Classes ORDER BY class_name ASC")->fetchAll();
 }
 
-// 3. Handle Filters
+// Retrieve filter parameters from URL or set defaults
 $filter_class = $_GET['class_id'] ?? '';
-$filter_date  = $_GET['attendance_date'] ?? date('Y-m-d'); // Default to today
+$filter_date  = $_GET['attendance_date'] ?? date('Y-m-d'); 
 
-// ---------------------------------------------------------
-// 4. THE SECURE QUERY
-// ---------------------------------------------------------
+// Base query to fetch attendance data joined with pupil and class info
 $sql = "SELECT Attendance.*, Pupils.full_name, Classes.class_name 
         FROM Attendance 
         JOIN Pupils ON Attendance.pupil_id = Pupils.pupil_id 
@@ -27,10 +32,9 @@ $sql = "SELECT Attendance.*, Pupils.full_name, Classes.class_name
 
 $params = [':date' => $filter_date];
 
-// SECURITY LOGIC:
+// Modify query based on user role
 if ($role == 'parent') {
-    // If Parent: ONLY show children linked to this logged-in user
-    // We use a Subquery to find the pupils linked to this parent's user_id
+    // Restrict parents to only view records for their linked children
     $sql .= " AND Attendance.pupil_id IN (
                 SELECT pp.pupil_id 
                 FROM Pupil_Parent pp
@@ -40,15 +44,17 @@ if ($role == 'parent') {
     $params[':uid'] = $current_user_id;
 
 } else {
-    // If Admin/Teacher: Allow Class Filtering
+    // Apply class filter for staff if a specific class is selected
     if (!empty($filter_class)) {
         $sql .= " AND Classes.class_id = :cid";
         $params[':cid'] = $filter_class;
     }
 }
 
+// Sort results by class and pupil name
 $sql .= " ORDER BY Classes.class_name ASC, Pupils.full_name ASC";
 
+// Execute the prepared statement
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $records = $stmt->fetchAll();
@@ -131,6 +137,7 @@ $records = $stmt->fetchAll();
                     </thead>
                     <tbody>
                         <?php foreach ($records as $row): 
+                            // Determine CSS class based on attendance status
                             $statusClass = 'status-active'; 
                             if ($row['status'] == 'Absent') $statusClass = 'status-inactive'; 
                             if ($row['status'] == 'Late') $statusClass = 'status-warning';    

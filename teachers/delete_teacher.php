@@ -1,36 +1,28 @@
 <?php
 session_start();
-
-// Check if the user is logged in AND if they are an admin
-// (You can adjust 'admin' to 'teacher' if teachers should also have access)
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    // If not authorized, kick them back to login
-    header("Location: ../login.php"); 
-    exit;
-}
-
-session_start();
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php"); exit;
-}
 include '../db.php';
+
+// Verify authentication: Only administrators are authorized to delete teacher accounts
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../login.php"); 
+    exit(); 
+}
 
 if (isset($_GET['id'])) {
     $teacher_id = $_GET['id'];
 
     try {
-        // 1. Find the linked User ID first
+        // Retrieve associated User ID to ensure complete account removal
         $stmt = $pdo->prepare("SELECT user_id FROM teachers WHERE teacher_id = :id");
         $stmt->execute([':id' => $teacher_id]);
         $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($teacher && $teacher['user_id']) {
-            // 2. Delete the USER. 
-            // The DB "ON DELETE CASCADE" rule will automatically delete the Teacher Profile too!
+            // Delete user account; database cascade will automatically remove the teacher profile
             $del_stmt = $pdo->prepare("DELETE FROM users WHERE user_id = :uid");
             $del_stmt->execute([':uid' => $teacher['user_id']]);
         } else {
-            // Fallback: If no user linked, just delete the teacher record
+            // Fallback: Delete teacher record directly if no user login is linked
             $del_stmt = $pdo->prepare("DELETE FROM teachers WHERE teacher_id = :id");
             $del_stmt->execute([':id' => $teacher_id]);
         }
@@ -39,12 +31,12 @@ if (isset($_GET['id'])) {
         exit;
 
     } catch (PDOException $e) {
-        // Handle "Foreign Key" Error (e.g. Teacher is assigned to a class)
+        // Handle foreign key violations (e.g., Teacher is currently assigned to a Class)
         ?>
         <!DOCTYPE html>
         <html lang="en">
         <head>
-            <meta charset="UTF-8"><title>Error</title>
+            <meta charset="UTF-8"><title>Action Failed</title>
             <link rel="stylesheet" href="../style.css">
         </head>
         <body class="centered-layout">
@@ -62,6 +54,8 @@ if (isset($_GET['id'])) {
         exit;
     }
 } else {
+    // Redirect if accessed without a valid ID
     header("Location: teachers.php");
+    exit();
 }
 ?>

@@ -1,8 +1,24 @@
 <?php
+include 'db.php';
+session_start();
 
+// --- SECURITY CHECK ---
+// Only allow a logged-in ADMIN to reset the system.
+// Everyone else gets blocked immediately.
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    die("ACCESS DENIED: You do not have permission to reset the system.");
+}
+
+// ... rest of your code ...
+$users = [
+    'admin'   => 'admin123',
+];
+?>
+
+<?php
 include 'db.php';
 
-// The Default Credentials we want to create
+// Define default credentials for system initialization
 $users = [
     'admin'   => 'admin123',
     'teacher' => 'teacher123',
@@ -25,15 +41,15 @@ $users = [
         <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
             <?php
             foreach ($users as $username => $plain_password) {
-                // 1. Hash the password
+                // Generate a secure hash for the password
                 $hashed = password_hash($plain_password, PASSWORD_DEFAULT);
                 
                 try {
-                    // 2. Delete old user (to be safe)
+                    // Remove existing user records to prevent duplicate key errors
                     $pdo->prepare("DELETE FROM users WHERE username = ?")->execute([$username]);
                     
-                    // 3. Insert new user
-                    // Note: For this simple system, the 'role' is the same as the username
+                    // Insert new user record with hashed password
+                    // Role is assigned based on the username for this demonstration
                     $sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute([$username, $hashed, $username]);

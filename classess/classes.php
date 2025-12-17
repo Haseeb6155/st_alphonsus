@@ -1,18 +1,24 @@
 <?php
-/*
-    CLASS DASHBOARD
-    ---------------
-    Displays classes as colorful cards.
-*/
+// Establish database connection
 include '../db.php';
+
+// Initialize session if not already started
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-// --- THE FIX ---
-// We must define the role here so the Navbar knows who is logged in.
-$role = $_SESSION['role'] ?? 'guest';
-// ----------------
+// --- AUTHENTICATION CHECK ---
+// Ensure that only logged-in users can access the class management dashboard.
+// Unauthenticated users are redirected to the login page.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../index.php");
+    exit;
+}
 
-// Fetch Classes AND count how many pupils are in each class
+// Retrieve user role for potential permission checks
+$role = $_SESSION['role'];
+
+// --- DATA RETRIEVAL ---
+// 1. Select all class details and the associated teacher's name (using LEFT JOIN to include classes without teachers).
+// 2. Execute a subquery to count the number of pupils currently enrolled in each class.
 $sql = "SELECT Classes.*, Teachers.full_name, 
         (SELECT COUNT(*) FROM Pupils WHERE Pupils.class_id = Classes.class_id) as student_count
         FROM Classes 
@@ -29,14 +35,14 @@ $classes = $stmt->fetchAll();
     <title>Class Management</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* CSS Grid for the Class Cards */
+        /* Grid Layout: Responsive design that auto-fills columns based on screen width */
         .classes-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 25px;
         }
 
-        /* The Colorful Card */
+        /* Card Component Styling */
         .class-card {
             background-color: var(--bg-card);
             border-radius: 12px;
@@ -48,13 +54,12 @@ $classes = $stmt->fetchAll();
 
         .class-card:hover { transform: translateY(-5px); }
 
-        /* The Colored Header (Gradient) */
         .card-header {
             padding: 20px;
             color: white;
         }
 
-        /* Helper classes for different gradients */
+        /* Dynamic background gradients for visual distinction */
         .gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
         .gradient-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
         .gradient-pink { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
@@ -96,7 +101,7 @@ $classes = $stmt->fetchAll();
 
         <div class="classes-grid">
             <?php 
-                // Array of gradient classes to cycle through
+                // Define array of CSS classes for rotating card colors
                 $gradients = ['gradient-blue', 'gradient-purple', 'gradient-pink', 'gradient-orange'];
                 $i = 0;
             ?>
@@ -134,7 +139,7 @@ $classes = $stmt->fetchAll();
                         </div>
                     </div>
                 </div>
-                <?php $i++; // Increment to change color for next card ?>
+                <?php $i++; // Increment counter to change color for the next card ?>
             <?php endforeach; ?>
         </div>
     </div>

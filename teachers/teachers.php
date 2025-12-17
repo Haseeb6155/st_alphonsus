@@ -1,32 +1,41 @@
 <?php
 /*
     TEACHERS DASHBOARD
-    ------------------
     Displays teachers in a modern grid layout with avatars.
 */
 
 include '../db.php';
-
-// 1. Session Check
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-$role = $_SESSION['role'] ?? 'guest';
 
-// 2. Fetch Teachers
+// Verify user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+// Restrict access: Only administrators can manage staff
+if ($_SESSION['role'] !== 'admin') {
+    die("Access Denied: Admin access required.");
+}
+
+// Retrieve all teacher records sorted alphabetically
 $sql = "SELECT * FROM teachers ORDER BY full_name ASC";
 $stmt = $pdo->query($sql);
 $teachers = $stmt->fetchAll();
 
-// Helper: Function to generate initials (e.g., "Emma Thompson" -> "ET")
+// --- UI HELPERS ---
+
+// Helper function to generate initials from a name (e.g., "John Doe" -> "JD")
 function getInitials($name) {
     $words = explode(" ", $name);
     $initials = "";
     foreach ($words as $w) {
         $initials .= strtoupper($w[0]);
     }
-    return substr($initials, 0, 2); // Max 2 letters
+    return substr($initials, 0, 2);
 }
 
-// Helper: Function to assign a random color to the avatar
+// Helper function to assign a consistent color based on index
 function getAvatarColor($index) {
     $colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
     return $colors[$index % count($colors)];
@@ -40,7 +49,7 @@ function getAvatarColor($index) {
     <title>Teaching Staff</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* Specific Styles for Teacher Cards */
+        /* Card Grid Layout */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -63,6 +72,7 @@ function getAvatarColor($index) {
             border-color: var(--primary);
         }
 
+        /* Avatar Circle Styling */
         .avatar {
             width: 60px;
             height: 60px;
@@ -88,6 +98,7 @@ function getAvatarColor($index) {
             margin: 0;
         }
 
+        /* Action Buttons Row */
         .action-row {
             margin-top: 15px;
             padding-top: 15px;
@@ -111,23 +122,19 @@ function getAvatarColor($index) {
         <div class="grid-container">
             <?php foreach ($teachers as $index => $teacher): ?>
                 <div class="teacher-card">
-                    <!-- 1. The Avatar Circle -->
                     <div class="avatar" style="background-color: <?= getAvatarColor($index) ?>;">
                         <?= getInitials($teacher['full_name']) ?>
                     </div>
 
-                    <!-- 2. Teacher Details -->
                     <div style="flex-grow: 1;">
                         <div class="teacher-info">
                             <h3><?= htmlspecialchars($teacher['full_name']) ?></h3>
                             <p>📞 <?= htmlspecialchars($teacher['phone']) ?></p>
-                            <!-- Truncate address if it's too long -->
                             <p style="font-size: 0.8rem; margin-top: 4px;">
                                 📍 <?= htmlspecialchars(substr($teacher['address'], 0, 25)) ?>...
                             </p>
                         </div>
                         
-                        <!-- 3. Edit/Delete Buttons -->
                         <div class="action-row">
                             <a href="edit_teacher.php?id=<?= $teacher['teacher_id'] ?>" style="color: var(--warning); font-size: 0.85rem;">Edit</a>
                             <a href="delete_teacher.php?id=<?= $teacher['teacher_id'] ?>" 
@@ -140,7 +147,7 @@ function getAvatarColor($index) {
         </div>
     </div>
 
-                <?php include '../footer.php'; ?>
+    <?php include '../footer.php'; ?>
 
 </body>
 </html>

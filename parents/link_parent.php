@@ -1,18 +1,20 @@
 <?php
-/*
-    LINK PARENT CONTROLLER
-    ----------------------
-    Handles assigning a parent to a pupil.
-    Includes logic to count existing parents for better UX.
-*/
-
+// Manage associations between students and parents
 include '../db.php';
+
+session_start();
+
+// Restrict access to staff and administrators only
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] == 'parent') {
+    header("Location: ../index.php");
+    exit;
+}
 
 $message = "";
 
-// 1. DATA FETCHING: Get Pupils & Parent Counts
-// We use a LEFT JOIN to count how many parents each student already has.
+// --- DATA RETRIEVAL ---
 try {
+    // Fetch students and count existing parent associations for each
     $pupils_sql = "SELECT Pupils.pupil_id, Pupils.full_name, COUNT(Pupil_Parent.parent_id) as parent_count 
                    FROM Pupils 
                    LEFT JOIN Pupil_Parent ON Pupils.pupil_id = Pupil_Parent.pupil_id 
@@ -20,7 +22,7 @@ try {
                    ORDER BY Pupils.full_name ASC";
     $pupils = $pdo->query($pupils_sql)->fetchAll();
 
-    // Get Parents List
+    // Fetch list of available parents
     $parents_sql = "SELECT parent_id, full_name FROM Parents ORDER BY full_name ASC";
     $parents = $pdo->query($parents_sql)->fetchAll();
     
@@ -28,21 +30,22 @@ try {
     die("Database Error: " . $e->getMessage());
 }
 
-// 2. FORM HANDLING: Process the Link Request
+// --- FORM PROCESSING ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pupil_id  = $_POST['pupil_id'] ?? '';
     $parent_id = $_POST['parent_id'] ?? '';
 
+    // Validate that both student and parent are selected
     if (empty($pupil_id) || empty($parent_id)) {
         $message = "<div class='status-pill status-inactive'>Please select both a Pupil and a Parent.</div>";
     } else {
         try {
-            // A. Create the Link
+            // Insert new relationship record into the link table
             $insert_sql = "INSERT INTO Pupil_Parent (pupil_id, parent_id) VALUES (:pid, :paid)";
             $stmt = $pdo->prepare($insert_sql);
             $stmt->execute([':pid' => $pupil_id, ':paid' => $parent_id]);
             
-            // B. Get Updated Count (for the success message)
+            // Retrieve updated count for the success message
             $count_stmt = $pdo->prepare("SELECT COUNT(*) FROM Pupil_Parent WHERE pupil_id = ?");
             $count_stmt->execute([$pupil_id]);
             $total = $count_stmt->fetchColumn();
@@ -50,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = "<div class='status-pill status-active'>Link Created! (Student now has $total linked parents)</div>";
             
         } catch (PDOException $e) {
-            // Error 23000 means "Duplicate Entry" (Parent is already linked to this specific student)
+            // Handle duplicate entry errors (relationship already exists)
             if ($e->getCode() == 23000) {
                  $message = "<div class='status-pill status-warning'>This Parent is already linked to this Student!</div>";
             } else {

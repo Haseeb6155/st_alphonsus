@@ -1,17 +1,18 @@
 <?php
 include '../db.php';
+
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-// 1. Security Check
-if (!isset($_SESSION['role']) || $_SESSION['role'] == 'parent') {
+// Security: Block access for non-admins and parents to protect privacy
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] == 'parent') {
     die("Access Denied");
 }
 
 $role = $_SESSION['role'];
+// Check if user is admin to toggle specific buttons
 $is_admin = ($role == 'admin');
 
-// 2. Fetch Parents AND their linked Children
-// We use a special SQL trick (GROUP_CONCAT) to list all kids in one box.
+// Fetch parents and use GROUP_CONCAT to list children names in one query
 $sql = "SELECT Parents.*, 
         GROUP_CONCAT(Pupils.full_name SEPARATOR ', ') as children_names
         FROM Parents
@@ -37,7 +38,11 @@ $parents = $pdo->query($sql)->fetchAll();
     <div class="container">
         <div class="page-header">
             <h1>Parent Records</h1>
-            <?php if ($is_admin): ?>
+            
+            <?php 
+            // Only show action buttons to administrators
+            if ($is_admin): 
+            ?>
                 <div>
                     <a href="link_parent.php" class="btn btn-sm" style="background: var(--warning); color: #fff; margin-right: 10px;">Link to Pupil</a>
                     <a href="add_parent.php" class="btn btn-primary">+ Add Parent</a>
@@ -50,7 +55,8 @@ $parents = $pdo->query($sql)->fetchAll();
                 <thead>
                     <tr>
                         <th>Full Name</th>
-                        <th>Linked Student(s)</th> <th>Email</th>
+                        <th>Linked Student(s)</th> 
+                        <th>Email</th>
                         <th>Phone</th>
                         <th>Address</th>
                         <?php if ($is_admin): ?>
@@ -83,6 +89,7 @@ $parents = $pdo->query($sql)->fetchAll();
                             <?php if ($is_admin): ?>
                                 <td style="text-align: right;">
                                     <a href="edit_parent.php?id=<?= $p['parent_id'] ?>" class="btn btn-sm" style="background: #374151;">Edit</a>
+                                    
                                     <a href="delete_parent.php?id=<?= $p['parent_id'] ?>" 
                                        class="btn btn-sm" 
                                        style="background: rgba(239,68,68,0.2); color: #f87171;" 

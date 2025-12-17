@@ -1,13 +1,16 @@
 <?php
-/*
-    EDIT PARENT CONTROLLER
-    ----------------------
-    Handles updating parent details and unlinking children.
-*/
-
+// Edit parent details and manage student associations
 include '../db.php';
 
-// 1. VALIDATION: Ensure an ID was provided
+session_start();
+
+// Restrict access to administrators and teachers only
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] == 'parent') {
+    header("Location: ../index.php");
+    exit;
+}
+
+// Ensure a valid parent ID is provided
 if (!isset($_GET['id'])) {
     header("Location: parents.php");
     exit;
@@ -16,9 +19,10 @@ if (!isset($_GET['id'])) {
 $id = $_GET['id'];
 $message = "";
 
-// 2. LOGIC: Handle "Unlink Child" Request
+// Handle request to unlink a student from this parent
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unlink_pupil_id'])) {
     try {
+        // Remove the specific link record from the database
         $unlink_sql = "DELETE FROM Pupil_Parent WHERE parent_id = :paid AND pupil_id = :pid";
         $stmt = $pdo->prepare($unlink_sql);
         $stmt->execute([
@@ -31,17 +35,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unlink_pupil_id'])) {
     }
 }
 
-// 3. LOGIC: Handle "Update Parent Info" Request
+// Process form submission to update parent details
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_parent'])) {
     $full_name = trim($_POST['full_name']);
     $email     = trim($_POST['email']);
     $phone     = trim($_POST['phone']);
     $address   = trim($_POST['address']);
 
+    // Validate required fields
     if (empty($full_name) || empty($phone)) {
         $message = "<div class='status-pill status-inactive'>Full Name and Phone are required.</div>";
     } else {
         try {
+            // Update parent record securely
             $update_sql = "UPDATE Parents 
                            SET full_name = :name, email = :email, phone = :phone, address = :addr 
                            WHERE parent_id = :id";
@@ -62,16 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_parent'])) {
     }
 }
 
-// 4. DATA FETCHING: Get current Parent & Linked Children
+// Retrieve current parent data for the form
 try {
-    // Get Parent
     $stmt = $pdo->prepare("SELECT * FROM Parents WHERE parent_id = :id");
     $stmt->execute([':id' => $id]);
     $parent = $stmt->fetch();
 
     if (!$parent) { die("Error: Parent not found."); }
 
-    // Get Linked Children
+    // Fetch list of students currently linked to this parent
     $kids_sql = "SELECT Pupils.pupil_id, Pupils.full_name 
                  FROM Pupils 
                  JOIN Pupil_Parent ON Pupils.pupil_id = Pupil_Parent.pupil_id 
@@ -92,7 +97,7 @@ try {
     <title>Edit Parent - St Alphonsus</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* Local styles for the link manager list */
+        /* Specific styles for the linked students list */
         .link-manager { margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
         .link-row {
             display: flex;
@@ -161,7 +166,7 @@ try {
                     <div class="link-row">
                         <span><?= htmlspecialchars($kid['full_name']) ?></span>
                         
-                        <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to remove this link?');">
+                        <form method="POST" style="margin:0;" onsubmit="return confirm('Remove this link?');">
                             <input type="hidden" name="unlink_pupil_id" value="<?= $kid['pupil_id'] ?>">
                             <button type="submit" class="unlink-btn">Unlink</button>
                         </form>

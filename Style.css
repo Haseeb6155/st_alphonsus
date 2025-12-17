@@ -1,6 +1,6 @@
-/* --- 1. CSS VARIABLES (The Design Tokens) --- */
+/* 1. Global Variables & Colors */
 :root {
-    /* Backgrounds */
+    /* Background Colors */
     --bg-body: #111827;       
     --bg-card: #1f2937;       
     --bg-input: #374151;      
@@ -9,50 +9,48 @@
     --text-main: #f9fafb;     
     --text-muted: #9ca3af;    
 
-    /* Brand Colors */
+    /* Brand & Status Colors */
     --primary: #3b82f6;       
     --primary-hover: #2563eb; 
     --danger: #ef4444;        
     --success: #10b981;       
     --warning: #f59e0b;       
+    
     /* Spacing & Borders */
     --radius: 8px;            
     --border: 1px solid #374151; 
 }
 
-/* --- 2. GLOBAL RESET & TYPOGRAPHY --- */
+/* 2. Global Reset */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* [UPDATED] Body is now a flex container to push footer down */
 body {
     font-family: 'Segoe UI', Inter, system-ui, sans-serif;
     background-color: var(--bg-body);
     color: var(--text-main);
     line-height: 1.6;
-    -webkit-font-smoothing: antialiased; /* Makes text look sharper */
+    -webkit-font-smoothing: antialiased;
     
-    /* STICKY FOOTER LOGIC */
+    /* Sticky Footer Setup */
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Forces page to take full height of screen */
+    min-height: 100vh;
 }
 
 a { text-decoration: none; color: inherit; transition: 0.2s; }
 ul { list-style: none; }
 
-/* --- 3. LAYOUT UTILITIES --- */
-
-/* [UPDATED] Container grows to fill empty space */
+/* 3. Layout Utilities */
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 40px 20px; /* Increased top padding for breathing room */
+    padding: 40px 20px;
     width: 100%;
-    flex: 1; /* This pushes the footer to the bottom */
+    flex: 1; /* Pushes footer to bottom */
 }
 
 .page-header {
@@ -69,7 +67,7 @@ h1 {
     color: var(--text-main);
 }
 
-/* --- 4. NAVIGATION BAR --- */
+/* 4. Navigation Bar */
 nav {
     background-color: var(--bg-card);
     border-bottom: var(--border);
@@ -119,7 +117,7 @@ nav {
 }
 
 .logout-btn {
-    background-color: rgba(239, 68, 68, 0.1); /* Transparent Red */
+    background-color: rgba(239, 68, 68, 0.1);
     color: var(--danger) !important;
     padding: 8px 16px !important;
     border-radius: var(--radius);
@@ -130,12 +128,12 @@ nav {
     color: white !important;
 }
 
-/* --- 5. NEW FOOTER STYLES --- */
+/* 5. Footer Styles */
 .main-footer {
     background-color: var(--bg-card);
     border-top: var(--border);
     padding: 20px 0;
-    margin-top: auto; /* Ensures it stays at bottom even if flex fails */
+    margin-top: auto;
     text-align: center;
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -163,7 +161,7 @@ nav {
     text-decoration: underline;
 }
 
-/* --- 6. BUTTONS --- */
+/* 6. Button Components */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -192,7 +190,7 @@ nav {
     font-size: 0.8rem;
 }
 
-/* --- 7. DATA TABLES --- */
+/* 7. Data Tables */
 .table-container {
     background-color: var(--bg-card);
     border-radius: var(--radius);
@@ -231,7 +229,7 @@ td {
 tr:last-child td { border-bottom: none; }
 tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
-/* --- 8. STATUS PILLS --- */
+/* 8. Status Indicators */
 .status-pill {
     display: inline-block;
     padding: 4px 12px;
@@ -255,7 +253,7 @@ tr:hover { background-color: rgba(255, 255, 255, 0.02); }
     color: #fbbf24;
 }
 
-/* --- 9. FORMS (Login & Add/Edit) --- */
+/* 9. Forms (Login & Entry) */
 .form-card {
     background-color: var(--bg-card);
     padding: 40px;
@@ -293,7 +291,7 @@ input:focus, select:focus {
     background-color: #4b5563;
 }
 
-/* --- 10. UTILITY CLASSES --- */
+/* 10. Utility Classes */
 .centered-layout {
     display: flex;
     flex-direction: column;
