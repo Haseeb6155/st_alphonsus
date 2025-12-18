@@ -79,11 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label>Assign Teacher</label>
                 <select name="teacher_id">
                     <option value="">-- No Teacher --</option>
-                    <?php foreach ($teachers as $t): ?>
+                    <?php 
+                    // Initiate the for each loop and close this php block
+                    // Everything in the HTML block is going to be looped
+                    foreach ($teachers as $t): ?>
                         <option value="<?= $t['teacher_id'] ?>">
                             <?= htmlspecialchars($t['full_name']) ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php 
+                    // Finish the for each block
+                endforeach; ?>
                 </select>
             </div>
 

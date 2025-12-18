@@ -75,10 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <div class="form-card">
         <h2 class="mb-4">Link Parent & Pupil</h2>
-        
-        <?php if ($message): ?>
+        <?php 
+            // Initiate the if-clause and close this php block
+            if ($message): 
+        ?>
             <div style="margin-bottom: 20px; text-align: center;"><?= $message ?></div>
-        <?php endif; ?>
+        <?php endif; // End the if-clause block ?>
 
         <form method="POST">
             
@@ -99,11 +101,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label>Select Parent</label>
                 <select name="parent_id" required>
                     <option value="">-- Choose Parent --</option>
-                    <?php foreach ($parents as $p): ?>
+                    
+                    <?php 
+                        // Initiate the for each loop and close this php block
+                        // Everything in the HTML block is going to be looped
+                        foreach ($parents as $p): 
+                    ?>
                         <option value="<?= $p['parent_id'] ?>">
                             <?= htmlspecialchars($p['full_name']) ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php endforeach; // Finish the for each block ?>
                 </select>
             </div>
 

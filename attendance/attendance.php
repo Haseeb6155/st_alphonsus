@@ -88,9 +88,12 @@ $records = $stmt->fetchAll();
     <div class="container">
         <div class="page-header">
             <h1>Attendance Log</h1>
-            <?php if ($role != 'parent'): ?>
+            
+            <?php 
+            // Initiate the if-clause and close this php block
+            if ($role != 'parent'): ?>
                 <a href="mark_attendance.php" class="btn btn-primary">+ Mark New Register</a>
-            <?php endif; ?>
+            <?php endif;// End the if-clause block ?>
         </div>
 
         <form method="GET" class="filter-bar">
@@ -99,19 +102,25 @@ $records = $stmt->fetchAll();
                 <input type="date" name="attendance_date" value="<?= htmlspecialchars($filter_date) ?>">
             </div>
             
-            <?php if ($role != 'parent'): ?>
+            <?php 
+            // Initiate the if-clause and close this php block
+            if ($role != 'parent'): ?>
                 <div class="filter-group">
                     <label>Filter by Class:</label>
                     <select name="class_id">
                         <option value="">-- All Classes --</option>
-                        <?php foreach ($classes as $c): ?>
+                        <?php 
+                        // Initiate the for each loop and close this php block
+                        // Everything in the HTML block is going to be looped
+
+                        foreach  ($classes as $c): ?>
                             <option value="<?= $c['class_id'] ?>" <?= $c['class_id'] == $filter_class ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($c['class_name']) ?>
                             </option>
-                        <?php endforeach; ?>
+                        <?php endforeach;// Finish the for each block ?>
                     </select>
                 </div>
-            <?php endif; ?>
+            <?php endif;// End the if-clause block ?>
 
             <button type="submit" class="btn btn-primary filter-btn">View Records</button>
             
