@@ -24,12 +24,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
         
         <?php // General access links for Staff and Parents ?>
         <?php if ($role == 'teacher' || $role == 'admin' || $role == 'parent'): ?>
-            <a href="/st_alphonsus/Pupils/index.php" 
+            <a href="/Pupils/index.php" 
                class="<?= ($current_page == 'index.php' || $current_page == 'add_pupil.php') ? 'active' : '' ?>">
                Pupils
             </a>
             
-            <a href="/st_alphonsus/attendance/attendance.php" 
+            <a href="/attendance/attendance.php" 
                class="<?= $current_page == 'attendance.php' ? 'active' : '' ?>">
                Attendance
             </a>
@@ -37,12 +37,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         <?php // Administrative links restricted to Admins only ?>
         <?php if ($role == 'admin'): ?>
-            <a href="/st_alphonsus/teachers/teachers.php" 
+            <a href="/teachers/teachers.php" 
                class="<?= $current_page == 'teachers.php' ? 'active' : '' ?>">
                Teachers
             </a>
             
-            <a href="/st_alphonsus/classess/classes.php" 
+            <a href="/classess/classes.php" 
                class="<?= $current_page == 'classes.php' ? 'active' : '' ?>">
                Classes
             </a>
@@ -50,12 +50,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         <?php // Parent management restricted to Staff (Admins and Teachers) ?>
         <?php if ($role == 'admin' || $role == 'teacher'): ?>
-            <a href="/st_alphonsus/parents/parents.php" 
+            <a href="/parents/parents.php" 
                class="<?= $current_page == 'parents.php' ? 'active' : '' ?>">
                Parents
             </a>
         <?php endif; ?>
 
-        <a href="/st_alphonsus/logout.php" class="logout-btn">Logout</a>
+        <a href="/logout.php" class="logout-btn">Logout</a>
     </div>
 </nav>
