@@ -1,11 +1,10 @@
 <?php
 /*
     LOGIN CONTROLLER
-    ----------------
     Handles safe authentication and user redirects.
 */
 
-// 1. Start Session safely
+// Initialize session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -14,42 +13,42 @@ require_once 'db.php';
 
 $error = "";
 
-// 2. Process Login Attempt
+// Process Login Attempt
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // Clean input
+    // Sanitize username input
     $username = trim($_POST['username']); 
     $password = $_POST['password'];
 
     try {
-        // Secure lookup using Prepared Statements (Stops SQL Injection)
+        // Execute prepared statement to prevent SQL injection
         $stmt = $pdo->prepare("SELECT user_id, username, password, role FROM users WHERE username = :name");
         $stmt->execute([':name' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Verify hash against the database
+        // Verify password hash against database record
         if ($user && password_verify($password, $user['password'])) {
             
-            // SECURITY: Refresh ID to kill any hijacked sessions
+            // Regenerate session ID to prevent session fixation attacks
             session_regenerate_id(true);
             
-            // Store user info
+            // Store user authentication details in session
             $_SESSION['user_id']  = $user['user_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role']     = $user['role'];
 
-            // Route based on job title
+            // Redirect user based on their assigned role
             $redirectPath = ($user['role'] === 'parent') ? 'attendance/attendance.php' : 'Pupils/index.php';
             header("Location: " . $redirectPath);
             exit;
 
         } else {
-            // Keep error vague so hackers can't guess valid usernames
+            // Use generic error message to prevent username enumeration
             $error = "Invalid username or password.";
         }
 
     } catch (PDOException $e) {
-        // Log the real error on the server, show a generic one to the user
+        // Log actual error internally and show generic message to user
         error_log("Login Error: " . $e->getMessage());
         $error = "System error. Please try again later.";
     }
